@@ -15,7 +15,6 @@
 package golicense
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"sort"
@@ -24,69 +23,6 @@ import (
 	"github.com/palantir/pkg/matcher"
 	"github.com/pkg/errors"
 )
-
-type LicenseParams struct {
-	Header        string
-	CustomHeaders []CustomLicenseParam
-	Exclude       matcher.Matcher
-}
-
-func (p *LicenseParams) validate() error {
-	var emptyNameParams []CustomLicenseParam
-	nameToParams := make(map[string][]CustomLicenseParam)
-
-	for _, v := range p.CustomHeaders {
-		if v.Name == "" {
-			emptyNameParams = append(emptyNameParams, v)
-		}
-		nameToParams[v.Name] = append(nameToParams[v.Name], v)
-	}
-
-	if len(emptyNameParams) > 0 {
-		return errors.Errorf("custom header entries have blank names: %+v", emptyNameParams)
-	}
-
-	var nameCollisionMsgs []string
-	for k, v := range nameToParams {
-		if len(v) > 1 {
-			nameCollisionMsgs = append(nameCollisionMsgs, fmt.Sprintf("%s: %+v", k, v))
-		}
-	}
-	if len(nameCollisionMsgs) > 0 {
-		return errors.Errorf(strings.Join(append([]string{"multiple custom header entries have the same name:"}, nameCollisionMsgs...), "\n\t"))
-	}
-
-	// map from path to custom header entries that have the path
-	pathsToCustomEntries := make(map[string][]string)
-	for _, ch := range p.CustomHeaders {
-		for _, path := range ch.IncludePaths {
-			pathsToCustomEntries[path] = append(pathsToCustomEntries[path], ch.Name)
-		}
-	}
-	var customPathCollisionMsgs []string
-	sortedKeys := make([]string, 0, len(pathsToCustomEntries))
-	for k := range pathsToCustomEntries {
-		sortedKeys = append(sortedKeys, k)
-	}
-	sort.Strings(sortedKeys)
-	for _, k := range sortedKeys {
-		v := pathsToCustomEntries[k]
-		if len(v) > 1 {
-			customPathCollisionMsgs = append(customPathCollisionMsgs, fmt.Sprintf("%s: %s", k, strings.Join(v, ", ")))
-		}
-	}
-	if len(customPathCollisionMsgs) > 0 {
-		return errors.Errorf(strings.Join(append([]string{"the same path is defined by multiple custom header entries:"}, customPathCollisionMsgs...), "\n\t"))
-	}
-
-	return nil
-}
-
-type CustomLicenseParam struct {
-	Name         string
-	Header       string
-	IncludePaths []string
-}
 
 func LicenseFiles(files []string, params LicenseParams, modify bool) ([]string, error) {
 	return processFiles(files, params, modify, applyLicenseToFiles)
@@ -97,10 +33,6 @@ func UnlicenseFiles(files []string, params LicenseParams, modify bool) ([]string
 }
 
 func processFiles(files []string, params LicenseParams, modify bool, f func(files []string, header string, modify bool) ([]string, error)) ([]string, error) {
-	if err := params.validate(); err != nil {
-		return nil, errors.Wrapf(err, "license parameters invalid")
-	}
-
 	goFileMatcher := matcher.Name(`.*\.go`)
 	var goFiles []string
 	for _, f := range files {
@@ -114,7 +46,7 @@ func processFiles(files []string, params LicenseParams, modify bool, f func(file
 	for _, f := range goFiles {
 		var longestMatcher string
 		longestMatchLen := 0
-		for _, v := range params.CustomHeaders {
+		for _, v := range params.CustomHeaders.headers() {
 			for _, p := range v.IncludePaths {
 				if matcher.PathLiteral(p).Match(f) && len(p) >= longestMatchLen {
 					longestMatcher = v.Name
@@ -135,7 +67,7 @@ func processFiles(files []string, params LicenseParams, modify bool, f func(file
 	var modified []string
 
 	// process custom matchers
-	for _, v := range params.CustomHeaders {
+	for _, v := range params.CustomHeaders.headers() {
 		currModified, err := f(m[v.Name], v.Header, modify)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to process headers for matcher %s", v.Name)
