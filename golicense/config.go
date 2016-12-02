@@ -30,9 +30,9 @@ type rawConfig struct {
 }
 
 type rawLicenseConfig struct {
-	Name    string                `yaml:"name" json:"name"`
-	Header  string                `yaml:"header" json:"header"`
-	Include matcher.NamesPathsCfg `yaml:"matchers" json:"matchers"`
+	Name   string   `yaml:"name" json:"name"`
+	Header string   `yaml:"header" json:"header"`
+	Paths  []string `yaml:"paths" json:"paths"`
 }
 
 func Load(configPath, jsonContent string) (LicenseParams, error) {
@@ -59,9 +59,9 @@ func Load(configPath, jsonContent string) (LicenseParams, error) {
 	customHeaders := make([]CustomLicenseParam, len(rawCfg.CustomHeaders))
 	for i, v := range rawCfg.CustomHeaders {
 		p := CustomLicenseParam{
-			Name:    v.Name,
-			Header:  v.Header,
-			Include: v.Include.Matcher(),
+			Name:         v.Name,
+			Header:       v.Header,
+			IncludePaths: v.Paths,
 		}
 		customHeaders[i] = p
 
