@@ -50,6 +50,7 @@
             "importedFrom": [
                 "github.com/palantir/checks/golicense",
                 "github.com/palantir/checks/golicense/cmd",
+                "github.com/palantir/checks/golicense/config",
                 "github.com/palantir/checks/golicense_test"
             ]
         },
@@ -59,7 +60,8 @@
             "numImportedGoFiles": 0,
             "importedFrom": [
                 "github.com/palantir/checks/golicense",
-                "github.com/palantir/checks/golicense/cmd"
+                "github.com/palantir/checks/golicense/cmd",
+                "github.com/palantir/checks/golicense/config"
             ]
         },
         {
@@ -67,7 +69,7 @@
             "numGoFiles": 13,
             "numImportedGoFiles": 0,
             "importedFrom": [
-                "github.com/palantir/checks/golicense"
+                "github.com/palantir/checks/golicense/config"
             ]
         }
     ],
