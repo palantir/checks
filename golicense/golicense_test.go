@@ -43,12 +43,13 @@ func TestLicenseFiles(t *testing.T) {
 	}()
 
 	for i, currCase := range []struct {
-		name         string
-		params       golicense.LicenseParams
-		goFiles      []gofiles.GoFileSpec
-		nonGoFiles   map[string]string
-		wantModified []string
-		wantContent  map[string]string
+		name           string
+		params         golicense.LicenseParams
+		customLicenses []golicense.CustomLicenseParam
+		goFiles        []gofiles.GoFileSpec
+		nonGoFiles     map[string]string
+		wantModified   []string
+		wantContent    map[string]string
 	}{
 		{
 			name: "license applied to Go files",
@@ -149,17 +150,17 @@ package bar`,
 			name: "custom license applied to files that match custom matchers",
 			params: golicense.LicenseParams{
 				Header: `// Copyright 2016 Palantir Technologies, Inc.`,
-				CustomHeaders: []golicense.CustomLicenseParam{
-					{
-						Name:         "Custom Co.",
-						Header:       "// Copyright 2016 Custom Co.",
-						IncludePaths: []string{"bar/bar.go"},
-					},
-					{
-						Name:         "Baz",
-						Header:       "// Copyright 2006 Legacy Inc.",
-						IncludePaths: []string{"baz/baz.go"},
-					},
+			},
+			customLicenses: []golicense.CustomLicenseParam{
+				{
+					Name:         "Custom Co.",
+					Header:       "// Copyright 2016 Custom Co.",
+					IncludePaths: []string{"bar/bar.go"},
+				},
+				{
+					Name:         "Baz",
+					Header:       "// Copyright 2006 Legacy Inc.",
+					IncludePaths: []string{"baz/baz.go"},
 				},
 			},
 			goFiles: []gofiles.GoFileSpec{
@@ -194,19 +195,19 @@ package baz`,
 			name: "custom matchers match hierarchically",
 			params: golicense.LicenseParams{
 				Header: `// Copyright 2016 Palantir Technologies, Inc.`,
-				CustomHeaders: []golicense.CustomLicenseParam{
-					{
-						Name:         "Custom Co.",
-						Header:       "// Copyright 2016 Custom Co.",
-						IncludePaths: []string{"bar"},
-					},
-					{
-						Name:   "Baz",
-						Header: "// Copyright 2006 Legacy Inc.",
-						IncludePaths: []string{
-							"bar/baz.go",
-							"bar/subdir",
-						},
+			},
+			customLicenses: []golicense.CustomLicenseParam{
+				{
+					Name:         "Custom Co.",
+					Header:       "// Copyright 2016 Custom Co.",
+					IncludePaths: []string{"bar"},
+				},
+				{
+					Name:   "Baz",
+					Header: "// Copyright 2006 Legacy Inc.",
+					IncludePaths: []string{
+						"bar/baz.go",
+						"bar/subdir",
 					},
 				},
 			},
@@ -259,7 +260,12 @@ package main`,
 		files, err := matcher.ListFiles(currTmpDir, matcher.Name(`.+`), nil)
 		require.NoError(t, err, "Case %d: %s", i, currCase.name)
 
-		modified, err := golicense.LicenseFiles(files, currCase.params, true)
+		params := currCase.params
+		customHeaders, err := golicense.NewCustomLicenseParams(currCase.customLicenses)
+		require.NoError(t, err, "Case %d: %s", i, currCase.name)
+		params.CustomHeaders = customHeaders
+
+		modified, err := golicense.LicenseFiles(files, params, true)
 		require.NoError(t, err, "Case %d: %s", i, currCase.name)
 
 		assert.Equal(t, currCase.wantModified, modified, "Case %d: %s", i, currCase.name)
@@ -285,12 +291,13 @@ func TestUnlicenseFiles(t *testing.T) {
 	}()
 
 	for i, currCase := range []struct {
-		name         string
-		params       golicense.LicenseParams
-		goFiles      []gofiles.GoFileSpec
-		nonGoFiles   map[string]string
-		wantModified []string
-		wantContent  map[string]string
+		name           string
+		params         golicense.LicenseParams
+		customLicenses []golicense.CustomLicenseParam
+		goFiles        []gofiles.GoFileSpec
+		nonGoFiles     map[string]string
+		wantModified   []string
+		wantContent    map[string]string
 	}{
 		{
 			name: "unlicense applied to Go files",
@@ -393,17 +400,17 @@ package bar`,
 			name: "custom license removed from files that match custom matchers",
 			params: golicense.LicenseParams{
 				Header: `// Copyright 2016 Palantir Technologies, Inc.`,
-				CustomHeaders: []golicense.CustomLicenseParam{
-					{
-						Name:         "Custom Co.",
-						Header:       "// Copyright 2016 Custom Co.",
-						IncludePaths: []string{"bar/bar.go"},
-					},
-					{
-						Name:         "Baz",
-						Header:       "// Copyright 2006 Legacy Inc.",
-						IncludePaths: []string{"baz/baz.go"},
-					},
+			},
+			customLicenses: []golicense.CustomLicenseParam{
+				{
+					Name:         "Custom Co.",
+					Header:       "// Copyright 2016 Custom Co.",
+					IncludePaths: []string{"bar/bar.go"},
+				},
+				{
+					Name:         "Baz",
+					Header:       "// Copyright 2006 Legacy Inc.",
+					IncludePaths: []string{"baz/baz.go"},
 				},
 			},
 			goFiles: []gofiles.GoFileSpec{
@@ -448,7 +455,12 @@ package baz`,
 		files, err := matcher.ListFiles(currTmpDir, matcher.Name(`.+`), nil)
 		require.NoError(t, err, "Case %d: %s", i, currCase.name)
 
-		modified, err := golicense.UnlicenseFiles(files, currCase.params, true)
+		params := currCase.params
+		customHeaders, err := golicense.NewCustomLicenseParams(currCase.customLicenses)
+		require.NoError(t, err, "Case %d: %s", i, currCase.name)
+		params.CustomHeaders = customHeaders
+
+		modified, err := golicense.UnlicenseFiles(files, params, true)
 		require.NoError(t, err, "Case %d: %s", i, currCase.name)
 
 		assert.Equal(t, currCase.wantModified, modified, "Case %d: %s", i, currCase.name)
@@ -460,86 +472,80 @@ package baz`,
 	}
 }
 
-func TestLicenseFilesValidatesParams(t *testing.T) {
+func TestValidateCustomLicenseParams(t *testing.T) {
 	for i, currCase := range []struct {
-		name    string
-		params  golicense.LicenseParams
-		wantErr string
+		name           string
+		customLicenses []golicense.CustomLicenseParam
+		wantErr        string
 	}{
 		{
-			name:   "empty configuration valid",
-			params: golicense.LicenseParams{},
+			name:           "empty configuration valid",
+			customLicenses: []golicense.CustomLicenseParam{},
 		},
 		{
 			name: "empty custom configuration name invalid",
-			params: golicense.LicenseParams{
-				CustomHeaders: []golicense.CustomLicenseParam{
-					{
-						Header:       "// Header",
-						IncludePaths: []string{""},
-					},
+			customLicenses: []golicense.CustomLicenseParam{
+				{
+					Header:       "// Header",
+					IncludePaths: []string{""},
 				},
 			},
-			wantErr: "license parameters invalid: custom header entries have blank names: [{Name: Header:// Header IncludePaths:[]}]",
+			wantErr: "custom header entries have blank names: [{Name: Header:// Header IncludePaths:[]}]",
 		},
 		{
 			name: "non-unique custom configuration names invalid",
-			params: golicense.LicenseParams{
-				CustomHeaders: []golicense.CustomLicenseParam{
-					{
-						Name:         "foo",
-						Header:       "// Header",
-						IncludePaths: []string{""},
-					},
-					{
-						Name:         "foo",
-						Header:       "// Header",
-						IncludePaths: []string{""},
-					},
+			customLicenses: []golicense.CustomLicenseParam{
+				{
+					Name:         "foo",
+					Header:       "// Header",
+					IncludePaths: []string{""},
+				},
+				{
+					Name:         "foo",
+					Header:       "// Header",
+					IncludePaths: []string{""},
 				},
 			},
-			wantErr: "license parameters invalid: multiple custom header entries have the same name:\n\tfoo: [{Name:foo Header:// Header IncludePaths:[]} {Name:foo Header:// Header IncludePaths:[]}]",
+			wantErr: "multiple custom header entries have the same name:\n\tfoo: [{Name:foo Header:// Header IncludePaths:[]} {Name:foo Header:// Header IncludePaths:[]}]",
 		},
 		{
 			name: "custom configurations with same paths invalid",
-			params: golicense.LicenseParams{
-				CustomHeaders: []golicense.CustomLicenseParam{
-					{
-						Name:   "foo",
-						Header: "// Header",
-						IncludePaths: []string{
-							"foo",
-							"bar",
-						},
+			customLicenses: []golicense.CustomLicenseParam{
+				{
+					Name:   "foo",
+					Header: "// Header",
+					IncludePaths: []string{
+						"foo",
+						"bar",
 					},
-					{
-						Name:   "bar",
-						Header: "// Header",
-						IncludePaths: []string{
-							"bar",
-							"baz",
-						},
+				},
+				{
+					Name:   "bar",
+					Header: "// Header",
+					IncludePaths: []string{
+						"bar",
+						"baz",
 					},
-					{
-						Name:   "ok",
-						Header: "// Header",
-						IncludePaths: []string{
-							"ok",
-						},
+				},
+				{
+					Name:   "ok",
+					Header: "// Header",
+					IncludePaths: []string{
+						"ok",
 					},
-					{
-						Name:   "collides",
-						Header: "// Header",
-						IncludePaths: []string{
-							"bar",
-						},
+				},
+				{
+					Name:   "collides",
+					Header: "// Header",
+					IncludePaths: []string{
+						"bar",
 					},
 				},
 			},
-			wantErr: "license parameters invalid: the same path is defined by multiple custom header entries:\n\tbar: foo, bar, collides",
+			wantErr: "the same path is defined by multiple custom header entries:\n\tbar: foo, bar, collides",
 		},
 	} {
-		_, err := golicense.LicenseFiles(nil, currCase.params, false)
+		_, err := golicense.NewCustomLicenseParams(currCase.customLicenses)
 		if currCase.wantErr == "" {
 			assert.NoError(t, err, "Case %d: %s", i, currCase.name)
 		} else {
