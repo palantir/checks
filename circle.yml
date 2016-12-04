@@ -19,18 +19,13 @@ dependencies:
   override:
     - mkdir -p "$GOPATH/src/$IMPORT_PATH"
     - rsync -az --delete ./ "$GOPATH/src/$IMPORT_PATH/"
+    - cd "$GO_PROJECT_SRC_PATH" && ./godelw version
   cache_directories:
+    - ~/.godel
     - ~/download
 
 test:
   override:
-    - cd "$GO_PROJECT_SRC_PATH" && go install ./...
-    - cd "$GO_PROJECT_SRC_PATH" && go test -v ./...
-    - |
-      cd "$GO_PROJECT_SRC_PATH" && \
-      FILES=$(ptimports -l $(find . -type f -name '*.go' -not -path "./vendor/*")) && \
-      if [[ ! -z "$FILES" ]]; then
-        echo "Files not formatted by ptimports:"
-        echo "$FILES"
-        false
-      fi
+    - cd "$GO_PROJECT_SRC_PATH" && go install $(./godelw packages)
+    - mkdir -p "$CIRCLE_TEST_REPORTS/$CIRCLE_PROJECT_REPONAME"
+    - cd "$GO_PROJECT_SRC_PATH" && ./godelw verify --apply=false --junit-output="$CIRCLE_TEST_REPORTS/$CIRCLE_PROJECT_REPONAME/$CIRCLE_PROJECT_REPONAME-tests.xml"
