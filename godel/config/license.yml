@@ -30,7 +30,7 @@ custom-headers:
       // for license information.
 
     paths:
-      - outparamcheck/error.go
       - outparamcheck/exprs
-      - outparamcheck/outparamcheck.go
-      - outparamcheck/outparamcheck_test.go
+      - outparamcheck/outparamcheck/error.go
+      - outparamcheck/outparamcheck/outparamcheck.go
+      - outparamcheck/outparamcheck/outparamcheck_test.go

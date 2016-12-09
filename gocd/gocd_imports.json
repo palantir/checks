@@ -39,9 +39,9 @@
             "numGoFiles": 2,
             "numImportedGoFiles": 0,
             "importedFrom": [
-                "github.com/palantir/checks/gocd",
                 "github.com/palantir/checks/gocd/cmd",
-                "github.com/palantir/checks/gocd/config"
+                "github.com/palantir/checks/gocd/config",
+                "github.com/palantir/checks/gocd/gocd"
             ]
         },
         {
@@ -60,7 +60,7 @@
             "numGoFiles": 2,
             "numImportedGoFiles": 0,
             "importedFrom": [
-                "github.com/palantir/checks/gocd_test"
+                "github.com/palantir/checks/gocd/gocd_test"
             ]
         },
         {
@@ -68,7 +68,7 @@
             "numGoFiles": 1,
             "numImportedGoFiles": 0,
             "importedFrom": [
-                "github.com/palantir/checks/gocd_test"
+                "github.com/palantir/checks/gocd/gocd_test"
             ]
         },
         {
@@ -76,7 +76,7 @@
             "numGoFiles": 6,
             "numImportedGoFiles": 9,
             "importedFrom": [
-                "github.com/palantir/checks/gocd_test"
+                "github.com/palantir/checks/gocd/gocd_test"
             ]
         },
         {
@@ -84,7 +84,7 @@
             "numGoFiles": 5,
             "numImportedGoFiles": 15,
             "importedFrom": [
-                "github.com/palantir/checks/gocd_test"
+                "github.com/palantir/checks/gocd/gocd_test"
             ]
         }
     ]

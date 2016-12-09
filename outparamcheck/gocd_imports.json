@@ -5,7 +5,7 @@
             "numGoFiles": 11,
             "numImportedGoFiles": 0,
             "importedFrom": [
-                "github.com/palantir/checks/outparamcheck"
+                "github.com/palantir/checks/outparamcheck/outparamcheck"
             ]
         },
         {
@@ -13,7 +13,7 @@
             "numGoFiles": 5,
             "numImportedGoFiles": 0,
             "importedFrom": [
-                "github.com/palantir/checks/outparamcheck"
+                "github.com/palantir/checks/outparamcheck/outparamcheck"
             ]
         },
         {
@@ -21,7 +21,7 @@
             "numGoFiles": 2,
             "numImportedGoFiles": 0,
             "importedFrom": [
-                "github.com/palantir/checks/outparamcheck"
+                "github.com/palantir/checks/outparamcheck/outparamcheck"
             ]
         },
         {
@@ -29,8 +29,8 @@
             "numGoFiles": 6,
             "numImportedGoFiles": 8,
             "importedFrom": [
-                "github.com/palantir/checks/outparamcheck",
-                "github.com/palantir/checks/outparamcheck_test"
+                "github.com/palantir/checks/outparamcheck/outparamcheck",
+                "github.com/palantir/checks/outparamcheck/outparamcheck_test"
             ]
         }
     ],
@@ -42,7 +42,7 @@
             "numImportedGoFiles": 9,
             "importedFrom": [
                 "github.com/palantir/checks/outparamcheck/exprs_test",
-                "github.com/palantir/checks/outparamcheck_test"
+                "github.com/palantir/checks/outparamcheck/outparamcheck_test"
             ]
         },
         {
@@ -50,7 +50,7 @@
             "numGoFiles": 5,
             "numImportedGoFiles": 15,
             "importedFrom": [
-                "github.com/palantir/checks/outparamcheck_test"
+                "github.com/palantir/checks/outparamcheck/outparamcheck_test"
             ]
         }
     ]

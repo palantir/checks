@@ -5,7 +5,7 @@
             "numGoFiles": 1,
             "numImportedGoFiles": 3,
             "importedFrom": [
-                "github.com/palantir/checks/ptimports"
+                "github.com/palantir/checks/ptimports/ptimports"
             ]
         },
         {
@@ -13,7 +13,7 @@
             "numGoFiles": 3,
             "numImportedGoFiles": 0,
             "importedFrom": [
-                "github.com/palantir/checks/ptimports"
+                "github.com/palantir/checks/ptimports/ptimports"
             ]
         }
     ],

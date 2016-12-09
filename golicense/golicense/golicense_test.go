@@ -26,7 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/palantir/checks/golicense"
+	"github.com/palantir/checks/golicense/golicense"
 )
 
 func TestLicenseFiles(t *testing.T) {
