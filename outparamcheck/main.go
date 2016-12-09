@@ -10,7 +10,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/palantir/checks/outparamcheck"
+	"github.com/palantir/checks/outparamcheck/outparamcheck"
 )
 
 func main() {

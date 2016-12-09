@@ -32,7 +32,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/palantir/checks/ptimports"
+	"github.com/palantir/checks/ptimports/ptimports"
 )
 
 var (

@@ -6,7 +6,7 @@
             "numImportedGoFiles": 0,
             "importedFrom": [
                 "github.com/palantir/checks/golicense/cmd",
-                "github.com/palantir/checks/golicense_test"
+                "github.com/palantir/checks/golicense/golicense_test"
             ]
         },
         {
@@ -48,10 +48,10 @@
             "numGoFiles": 3,
             "numImportedGoFiles": 0,
             "importedFrom": [
-                "github.com/palantir/checks/golicense",
                 "github.com/palantir/checks/golicense/cmd",
                 "github.com/palantir/checks/golicense/config",
-                "github.com/palantir/checks/golicense_test"
+                "github.com/palantir/checks/golicense/golicense",
+                "github.com/palantir/checks/golicense/golicense_test"
             ]
         },
         {
@@ -59,9 +59,9 @@
             "numGoFiles": 2,
             "numImportedGoFiles": 0,
             "importedFrom": [
-                "github.com/palantir/checks/golicense",
                 "github.com/palantir/checks/golicense/cmd",
-                "github.com/palantir/checks/golicense/config"
+                "github.com/palantir/checks/golicense/config",
+                "github.com/palantir/checks/golicense/golicense"
             ]
         },
         {
@@ -80,7 +80,7 @@
             "numGoFiles": 1,
             "numImportedGoFiles": 0,
             "importedFrom": [
-                "github.com/palantir/checks/golicense_test"
+                "github.com/palantir/checks/golicense/golicense_test"
             ]
         },
         {
@@ -88,7 +88,7 @@
             "numGoFiles": 6,
             "numImportedGoFiles": 9,
             "importedFrom": [
-                "github.com/palantir/checks/golicense_test"
+                "github.com/palantir/checks/golicense/golicense_test"
             ]
         },
         {
@@ -96,7 +96,7 @@
             "numGoFiles": 5,
             "numImportedGoFiles": 15,
             "importedFrom": [
-                "github.com/palantir/checks/golicense_test"
+                "github.com/palantir/checks/golicense/golicense_test"
             ]
         }
     ]

@@ -20,7 +20,7 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 
-	"github.com/palantir/checks/gocd"
+	"github.com/palantir/checks/gocd/gocd"
 )
 
 type RawConfig struct {
