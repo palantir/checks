@@ -115,22 +115,22 @@
 			"revisionTime": "2016-11-16T15:37:05Z"
 		},
 		{
-			"checksumSHA1": "Pi0u97cPlWSJJ4O/YjfOcWsACNA=",
+			"checksumSHA1": "SoOfjYDw7R1N1P2aHxIjXYFmWUo=",
 			"path": "golang.org/x/tools/go/ast/astutil",
-			"revision": "c2ef61f450233d3c629ade8eb2083e43fa75c97a",
-			"revisionTime": "2016-09-23T21:57:19Z"
+			"revision": "fcfba28e23c7bbd8474b355ca7d6a9d88afcca00",
+			"revisionTime": "2017-01-17T23:39:01Z"
 		},
 		{
-			"checksumSHA1": "AVET+5jDH2MEvtFi1I22DFHJswI=",
+			"checksumSHA1": "VtflDqIRy6TlpT4Dbwr55lxmsh8=",
 			"path": "golang.org/x/tools/go/buildutil",
-			"revision": "c2ef61f450233d3c629ade8eb2083e43fa75c97a",
-			"revisionTime": "2016-09-23T21:57:19Z"
+			"revision": "fcfba28e23c7bbd8474b355ca7d6a9d88afcca00",
+			"revisionTime": "2017-01-17T23:39:01Z"
 		},
 		{
-			"checksumSHA1": "6H8iekJjZCQtViKPe7T6O20KCJw=",
+			"checksumSHA1": "qbPByYAjuhYw/CWVOgI345PnDzQ=",
 			"path": "golang.org/x/tools/go/loader",
-			"revision": "c2ef61f450233d3c629ade8eb2083e43fa75c97a",
-			"revisionTime": "2016-09-23T21:57:19Z"
+			"revision": "fcfba28e23c7bbd8474b355ca7d6a9d88afcca00",
+			"revisionTime": "2017-01-17T23:39:01Z"
 		},
 		{
 			"checksumSHA1": "+OgOXBoiQ+X+C2dsAeiOHwBIEH0=",
