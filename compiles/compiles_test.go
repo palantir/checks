@@ -28,7 +28,59 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCompiles(t *testing.T) {
+func TestCompilesPassCases(t *testing.T) {
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+
+	tmpDir, cleanup, err := dirs.TempDir(wd, "")
+	require.NoError(t, err)
+	defer cleanup()
+
+	cases := []struct {
+		files []gofiles.GoFileSpec
+	}{
+		{
+			files: []gofiles.GoFileSpec{
+				{
+					RelPath: "foo/foo.go",
+					Src: `package foo
+				import "github.com/inner"
+				func Foo() {
+					inner.Inner()
+				}`,
+				},
+				{
+					RelPath: "foo/foo_test.go",
+					Src: `package foo_test
+				import "testing"
+				import "github.com/inner"
+				func TestFoo(t *testing.T) {
+					inner.Inner()
+				}`,
+				},
+				{
+					RelPath: "foo/vendor/github.com/inner/inner.go",
+					Src: `package inner
+				func Inner() {}`,
+				},
+			},
+		},
+	}
+
+	for i, currCase := range cases {
+		projectDir, err := ioutil.TempDir(tmpDir, "")
+		require.NoError(t, err)
+
+		buf := bytes.Buffer{}
+		_, err = gofiles.Write(projectDir, currCase.files)
+		require.NoError(t, err)
+
+		err = doCompiles(projectDir, nil, &buf)
+		require.NoError(t, err, "Case %d: %v", i, buf.String())
+	}
+}
+
+func TestCompilesErrorCases(t *testing.T) {
 	wd, err := os.Getwd()
 	require.NoError(t, err)
 
