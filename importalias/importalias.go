@@ -16,9 +16,6 @@ package main
 
 import (
 	"fmt"
-	"go/ast"
-	"go/parser"
-	"go/token"
 	"io"
 	"io/ioutil"
 	"os"
@@ -36,7 +33,8 @@ import (
 )
 
 const (
-	pkgsFlagName = "pkgs"
+	pkgsFlagName    = "pkgs"
+	verboseFlagName = "verbose"
 )
 
 var (
@@ -45,24 +43,30 @@ var (
 		Usage:    "paths to the packages to check",
 		Optional: true,
 	}
+	verboseFlag = flag.BoolFlag{
+		Name:  verboseFlagName,
+		Usage: "print verbose analysis of all imports that have multiple aliases",
+		Alias: "v",
+	}
 )
 
 func main() {
 	app := cli.NewApp(cli.DebugHandler(errorstringer.SingleStack))
 	app.Flags = append(app.Flags,
 		pkgsFlag,
+		verboseFlag,
 	)
 	app.Action = func(ctx cli.Context) error {
 		wd, err := dirs.GetwdEvalSymLinks()
 		if err != nil {
 			return errors.Wrapf(err, "Failed to get working directory")
 		}
-		return doImportAlias(wd, ctx.Slice(pkgsFlagName), ctx.App.Stdout)
+		return doImportAlias(wd, ctx.Slice(pkgsFlagName), ctx.Bool(verboseFlagName), ctx.App.Stdout)
 	}
 	os.Exit(app.Run(os.Args))
 }
 
-func doImportAlias(projectDir string, pkgPaths []string, w io.Writer) error {
+func doImportAlias(projectDir string, pkgPaths []string, verbose bool, w io.Writer) error {
 	if !path.IsAbs(projectDir) {
 		return errors.Errorf("projectDir %s must be an absolute path", projectDir)
 	}
@@ -88,9 +92,7 @@ func doImportAlias(projectDir string, pkgPaths []string, w io.Writer) error {
 		}
 	}
 
-	// package import path -> alias -> files that import using alias
-	imports := make(map[string]map[string][]string)
-
+	projectImportInfo := NewProjectImportInfo()
 	for _, pkgPath := range pkgPaths {
 		currPath := path.Join(projectDir, pkgPath)
 		fis, err := ioutil.ReadDir(currPath)
@@ -100,93 +102,87 @@ func doImportAlias(projectDir string, pkgPaths []string, w io.Writer) error {
 		for _, fi := range fis {
 			if !fi.IsDir() && strings.HasSuffix(fi.Name(), ".go") {
 				currFile := path.Join(currPath, fi.Name())
-				fileImports, err := processFile(currFile)
-				if err != nil {
-					return errors.Wrapf(err, "Failed to process file %s", currFile)
-				}
-				for k, v := range fileImports {
-					if v == "_" || v == "." {
-						// do not record "_" or "." aliases
-						continue
-					}
-
-					// if package path is not in imports map, allocate map
-					if _, ok := imports[k]; !ok {
-						imports[k] = make(map[string][]string)
-					}
-					innerMap := imports[k]
-					innerMap[v] = append(innerMap[v], path.Join(pkgPath, fi.Name()))
+				if err := projectImportInfo.AddImportAliasesFromFile(currFile); err != nil {
+					return errors.Wrapf(err, "failed to determine imports in file %s", currFile)
 				}
 			}
 		}
 	}
 
+	importsToAliases := projectImportInfo.ImportsToAliases()
 	var pkgsWithMultipleAliases []string
-	for k := range imports {
-		if len(imports[k]) > 1 {
+	pkgsWithMultipleAliasesMap := make(map[string]struct{})
+	for k, v := range importsToAliases {
+		if len(v) > 1 {
 			// package is imported using more than 1 alias
 			pkgsWithMultipleAliases = append(pkgsWithMultipleAliases, k)
-			for _, vv := range imports[k] {
-				sort.Strings(vv)
-			}
+			pkgsWithMultipleAliasesMap[k] = struct{}{}
 		}
 	}
 	sort.Strings(pkgsWithMultipleAliases)
 	if len(pkgsWithMultipleAliases) > 0 {
 		var output []string
-		for _, k := range pkgsWithMultipleAliases {
-			var sortedAliases []string
-			aliasToFile := imports[k]
-			for kk := range aliasToFile {
-				sortedAliases = append(sortedAliases, kk)
-			}
-			sort.Strings(sortedAliases)
+		if verbose {
+			for _, k := range pkgsWithMultipleAliases {
+				output = append(output, fmt.Sprintf("%s is imported using multiple different aliases:", k))
+				for _, currAliasInfo := range importsToAliases[k] {
+					var files []string
+					for k, v := range currAliasInfo.Occurrences {
+						relPkgPath, err := pkgpath.NewAbsPkgPath(k).Rel(projectDir)
+						if err != nil {
+							return errors.Wrapf(err, "failed to get package path")
+						}
+						relPkgPath = strings.TrimLeft(relPkgPath, "./")
+						files = append(files, fmt.Sprintf("%s:%d:%d", relPkgPath, v.Line, v.Column))
+					}
+					sort.Strings(files)
 
-			output = append(output, fmt.Sprintf("%s is imported using multiple different aliases:", k))
-			for _, currAlias := range sortedAliases {
-				output = append(output, fmt.Sprintf("\t%s:\n\t\t%s", currAlias, strings.Join(aliasToFile[currAlias], "\n\t\t")))
+					var numFilesMsg string
+					if len(currAliasInfo.Occurrences) == 1 {
+						numFilesMsg = "(1 file)"
+					} else {
+						numFilesMsg = fmt.Sprintf("(%d files)", len(currAliasInfo.Occurrences))
+					}
+					output = append(output, fmt.Sprintf("\t%s %s:\n\t\t%s", currAliasInfo.Alias, numFilesMsg, strings.Join(files, "\n\t\t")))
+				}
+			}
+		} else {
+			filesToAliases := projectImportInfo.FilesToImportAliases()
+
+			var relPkgPaths []string
+			relPkgPathToFile := make(map[string]string)
+			for file := range filesToAliases {
+				relPkgPath, err := pkgpath.NewAbsPkgPath(file).GoPathSrcRel()
+				if err != nil {
+					return errors.Wrapf(err, "failed to get package path")
+				}
+				relPkgPaths = append(relPkgPaths, relPkgPath)
+				relPkgPathToFile[relPkgPath] = file
+			}
+			sort.Strings(relPkgPaths)
+
+			for _, relPkgPath := range relPkgPaths {
+				file := relPkgPathToFile[relPkgPath]
+				for _, alias := range filesToAliases[file] {
+					if _, ok := pkgsWithMultipleAliasesMap[alias.ImportPath]; !ok {
+						continue
+					}
+					status := projectImportInfo.GetAliasStatus(alias.Alias, alias.ImportPath)
+					if status.OK {
+						continue
+					}
+
+					relPkgPath, err := pkgpath.NewAbsPkgPath(file).Rel(projectDir)
+					if err != nil {
+						return errors.Wrapf(err, "failed to get package path")
+					}
+					relPkgPath = strings.TrimLeft(relPkgPath, "./")
+					msg := fmt.Sprintf("%s:%d:%d: uses alias %q to import package %s. %s.", relPkgPath, alias.Pos.Line, alias.Pos.Column, alias.Alias, alias.ImportPath, status.Recommendation)
+					output = append(output, msg)
+				}
 			}
 		}
 		return errors.New(strings.Join(output, "\n"))
 	}
 	return nil
-}
-
-// processFile returns a map from all of the import paths in the file to the alias used for that import.
-func processFile(filename string) (map[string]string, error) {
-	src, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, filename, src, parser.ParseComments)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse file %s", filename)
-	}
-
-	aliasMap := make(map[string]string)
-	var visitor visitFn
-	visitor = visitFn(func(node ast.Node) ast.Visitor {
-		if node == nil {
-			return visitor
-		}
-		switch v := node.(type) {
-		case *ast.ImportSpec:
-			if v.Name != nil {
-				// import has alias: record
-				aliasMap[v.Path.Value] = v.Name.Name
-				break
-			}
-		}
-		return visitor
-	})
-	ast.Walk(visitor, file)
-	return aliasMap, nil
-}
-
-type visitFn func(node ast.Node) ast.Visitor
-
-func (fn visitFn) Visit(node ast.Node) ast.Visitor {
-	return fn(node)
 }
