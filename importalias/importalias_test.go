@@ -16,8 +16,10 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/nmiyake/pkg/dirs"
@@ -26,7 +28,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestImportAlias(t *testing.T) {
+func TestImportAliasNoError(t *testing.T) {
 	wd, err := os.Getwd()
 	require.NoError(t, err)
 
@@ -35,12 +37,9 @@ func TestImportAlias(t *testing.T) {
 	require.NoError(t, err)
 
 	cases := []struct {
-		name          string
-		getArgs       func(projectDir string) (string, []string)
-		files         []gofiles.GoFileSpec
-		verify        func(files map[string]gofiles.GoFile, got string, err error, caseNum int, caseName string)
-		listOutput    func(files map[string]gofiles.GoFile) []string
-		listAllOutput func(files map[string]gofiles.GoFile) []string
+		name    string
+		getArgs func(projectDir string) (string, []string)
+		files   []gofiles.GoFileSpec
 	}{
 		{
 			name: "no error",
@@ -52,9 +51,6 @@ func TestImportAlias(t *testing.T) {
 					RelPath: "foo.go",
 					Src:     `package main; import foo "fmt"; func main(){ foo.Println() }`,
 				},
-			},
-			verify: func(files map[string]gofiles.GoFile, got string, err error, caseNum int, caseName string) {
-				assert.NoError(t, err, "Case %d (%s)", caseNum, caseName)
 			},
 		},
 		{
@@ -72,9 +68,6 @@ func TestImportAlias(t *testing.T) {
 					Src:     `package bar; import foo "fmt"; func Bar(){ foo.Println() }`,
 				},
 			},
-			verify: func(files map[string]gofiles.GoFile, got string, err error, caseNum int, caseName string) {
-				assert.NoError(t, err, "Case %d (%s)", caseNum, caseName)
-			},
 		},
 		{
 			name: "no error if multiple files import same package with one using alias and other not using an alias",
@@ -90,9 +83,6 @@ func TestImportAlias(t *testing.T) {
 					RelPath: "bar/bar.go",
 					Src:     `package bar; import "fmt"; func Bar(){ fmt.Println() }`,
 				},
-			},
-			verify: func(files map[string]gofiles.GoFile, got string, err error, caseNum int, caseName string) {
-				assert.NoError(t, err, "Case %d (%s)", caseNum, caseName)
 			},
 		},
 		{
@@ -110,9 +100,6 @@ func TestImportAlias(t *testing.T) {
 					Src:     `package bar; import _ "fmt"; func Bar(){}`,
 				},
 			},
-			verify: func(files map[string]gofiles.GoFile, got string, err error, caseNum int, caseName string) {
-				assert.NoError(t, err, "Case %d (%s)", caseNum, caseName)
-			},
 		},
 		{
 			name: "no error if multiple files import same package with one using alias and other using .",
@@ -128,9 +115,6 @@ func TestImportAlias(t *testing.T) {
 					RelPath: "bar/bar.go",
 					Src:     `package bar; import . "fmt"; func Bar(){}`,
 				},
-			},
-			verify: func(files map[string]gofiles.GoFile, got string, err error, caseNum int, caseName string) {
-				assert.NoError(t, err, "Case %d (%s)", caseNum, caseName)
 			},
 		},
 		{
@@ -148,10 +132,39 @@ func TestImportAlias(t *testing.T) {
 					Src:     `package bar; import foo "io"; func Bar(){ var w foo.Writer; _ = w }`,
 				},
 			},
-			verify: func(files map[string]gofiles.GoFile, got string, err error, caseNum int, caseName string) {
-				assert.NoError(t, err, "Case %d (%s)", caseNum, caseName)
-			},
 		},
+	}
+
+	for i, currCase := range cases {
+		currTmpDir, err := ioutil.TempDir(tmpDir, "")
+		require.NoError(t, err)
+
+		_, err = gofiles.Write(currTmpDir, currCase.files)
+		require.NoError(t, err)
+
+		dir, args := currCase.getArgs(currTmpDir)
+
+		buf := bytes.Buffer{}
+		doMainErr := doImportAlias(dir, args, true, &buf)
+		assert.NoError(t, doMainErr, "Case %d (%s)", i, currCase.name)
+	}
+}
+
+func TestImportAliasError(t *testing.T) {
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+
+	tmpDir, cleanup, err := dirs.TempDir(wd, "")
+	defer cleanup()
+	require.NoError(t, err)
+
+	cases := []struct {
+		name          string
+		getArgs       func(projectDir string) (string, []string)
+		files         []gofiles.GoFileSpec
+		regularOutput func(files map[string]gofiles.GoFile) []string
+		verboseOutput func(files map[string]gofiles.GoFile) []string
+	}{
 		{
 			name: "error if multiple files import the same package using a different alias",
 			getArgs: func(projectDir string) (string, []string) {
@@ -167,12 +180,24 @@ func TestImportAlias(t *testing.T) {
 					Src:     `package bar; import bar "fmt"; func Bar(){ bar.Println() }`,
 				},
 			},
-			verify: func(files map[string]gofiles.GoFile, got string, err error, caseNum int, caseName string) {
-				assert.EqualError(t, err, "\"fmt\" is imported using multiple different aliases:\n\tbar:\n\t\tbar/bar.go\n\tfoo:\n\t\tfoo.go", "Case %d (%s)", caseNum, caseName)
+			regularOutput: func(files map[string]gofiles.GoFile) []string {
+				return []string{
+					`bar/bar.go:1:21: uses alias "bar" to import package "fmt". No consensus alias exists for this import in the project ("bar" and "foo" are both used once each).`,
+					`foo.go:1:22: uses alias "foo" to import package "fmt". No consensus alias exists for this import in the project ("bar" and "foo" are both used once each).`,
+				}
+			},
+			verboseOutput: func(files map[string]gofiles.GoFile) []string {
+				return []string{
+					"\"fmt\" is imported using multiple different aliases:",
+					"\tbar (1 file):",
+					"\t\tbar/bar.go:1:21",
+					"\tfoo (1 file):",
+					"\t\tfoo.go:1:22",
+				}
 			},
 		},
 		{
-			name: "error if multiple files import the same package using a different alias for multiple aliases",
+			name: "error if multiple files import the same package using a different alias for multiple packages",
 			getArgs: func(projectDir string) (string, []string) {
 				return projectDir, nil
 			},
@@ -194,8 +219,100 @@ func TestImportAlias(t *testing.T) {
 					Src:     `package other; import other "io"; func Other(){ var w other.Writer; _ = w }`,
 				},
 			},
-			verify: func(files map[string]gofiles.GoFile, got string, err error, caseNum int, caseName string) {
-				assert.EqualError(t, err, "\"fmt\" is imported using multiple different aliases:\n\tbar:\n\t\tbar/bar.go\n\tfoo:\n\t\tfoo.go\n\"io\" is imported using multiple different aliases:\n\tbaz:\n\t\tbaz/baz.go\n\tother:\n\t\tother/other.go", "Case %d (%s)", caseNum, caseName)
+			regularOutput: func(files map[string]gofiles.GoFile) []string {
+				return []string{
+					`bar/bar.go:1:21: uses alias "bar" to import package "fmt". No consensus alias exists for this import in the project ("bar" and "foo" are both used once each).`,
+					`baz/baz.go:1:21: uses alias "baz" to import package "io". No consensus alias exists for this import in the project ("baz" and "other" are both used once each).`,
+					`foo.go:1:22: uses alias "foo" to import package "fmt". No consensus alias exists for this import in the project ("bar" and "foo" are both used once each).`,
+					`other/other.go:1:23: uses alias "other" to import package "io". No consensus alias exists for this import in the project ("baz" and "other" are both used once each).`,
+				}
+			},
+			verboseOutput: func(files map[string]gofiles.GoFile) []string {
+				return []string{
+					"\"fmt\" is imported using multiple different aliases:",
+					"\tbar (1 file):",
+					"\t\tbar/bar.go:1:21",
+					"\tfoo (1 file):",
+					"\t\tfoo.go:1:22",
+					"\"io\" is imported using multiple different aliases:",
+					"\tbaz (1 file):",
+					"\t\tbaz/baz.go:1:21",
+					"\tother (1 file):",
+					"\t\tother/other.go:1:23",
+				}
+			},
+		},
+		{
+			name: "if multiple files import the same package using a different alias but one is more common, suggest the more common one",
+			getArgs: func(projectDir string) (string, []string) {
+				return projectDir, nil
+			},
+			files: []gofiles.GoFileSpec{
+				{
+					RelPath: "foo.go",
+					Src:     `package main; import foo "fmt"; func main(){ foo.Println() }`,
+				},
+				{
+					RelPath: "bar/bar.go",
+					Src:     `package bar; import bar "fmt"; func Bar(){ bar.Println() }`,
+				},
+				{
+					RelPath: "baz/baz.go",
+					Src:     `package baz; import foo "fmt"; func Baz(){ foo.Println() }`,
+				},
+			},
+			regularOutput: func(files map[string]gofiles.GoFile) []string {
+				return []string{
+					`bar/bar.go:1:21: uses alias "bar" to import package "fmt". Use alias "foo" instead.`,
+				}
+			},
+			verboseOutput: func(files map[string]gofiles.GoFile) []string {
+				return []string{
+					"\"fmt\" is imported using multiple different aliases:",
+					"\tfoo (2 files):",
+					"\t\tbaz/baz.go:1:21",
+					"\t\tfoo.go:1:22",
+					"\tbar (1 file):",
+					"\t\tbar/bar.go:1:21",
+				}
+			},
+		},
+		{
+			name: "verify correct message if there are more than 2 aliases used for an import",
+			getArgs: func(projectDir string) (string, []string) {
+				return projectDir, nil
+			},
+			files: []gofiles.GoFileSpec{
+				{
+					RelPath: "foo.go",
+					Src:     `package main; import foo "fmt"; func main(){ foo.Println() }`,
+				},
+				{
+					RelPath: "bar/bar.go",
+					Src:     `package bar; import bar "fmt"; func Bar(){ bar.Println() }`,
+				},
+				{
+					RelPath: "baz/baz.go",
+					Src:     `package baz; import baz "fmt"; func Baz(){ baz.Println() }`,
+				},
+			},
+			regularOutput: func(files map[string]gofiles.GoFile) []string {
+				return []string{
+					`bar/bar.go:1:21: uses alias "bar" to import package "fmt". No consensus alias exists for this import in the project ("bar", "baz" and "foo" are all used once each).`,
+					`baz/baz.go:1:21: uses alias "baz" to import package "fmt". No consensus alias exists for this import in the project ("bar", "baz" and "foo" are all used once each).`,
+					`foo.go:1:22: uses alias "foo" to import package "fmt". No consensus alias exists for this import in the project ("bar", "baz" and "foo" are all used once each).`,
+				}
+			},
+			verboseOutput: func(files map[string]gofiles.GoFile) []string {
+				return []string{
+					"\"fmt\" is imported using multiple different aliases:",
+					"\tbar (1 file):",
+					"\t\tbar/bar.go:1:21",
+					"\tbaz (1 file):",
+					"\t\tbaz/baz.go:1:21",
+					"\tfoo (1 file):",
+					"\t\tfoo.go:1:22",
+				}
 			},
 		},
 	}
@@ -210,7 +327,12 @@ func TestImportAlias(t *testing.T) {
 		dir, args := currCase.getArgs(currTmpDir)
 
 		buf := bytes.Buffer{}
-		doMainErr := doImportAlias(dir, args, &buf)
-		currCase.verify(files, buf.String(), doMainErr, i, currCase.name)
+		doMainErr := doImportAlias(dir, args, false, &buf)
+		require.Error(t, doMainErr, fmt.Sprintf("Case %d (%s)", i, currCase.name))
+		assert.Equal(t, currCase.regularOutput(files), strings.Split(doMainErr.Error(), "\n"), "Case %d (%s)", i, currCase.name)
+
+		doMainErr = doImportAlias(dir, args, true, &buf)
+		require.Error(t, doMainErr, fmt.Sprintf("Case %d (%s)", i, currCase.name))
+		assert.Equal(t, currCase.verboseOutput(files), strings.Split(doMainErr.Error(), "\n"), "Case %d (%s)", i, currCase.name)
 	}
 }
