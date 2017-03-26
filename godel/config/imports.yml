@@ -2,6 +2,7 @@ root-dirs:
   - compiles
   - extimport
   - gocd
+  - gogenerate
   - golicense
   - novendor
   - outparamcheck
