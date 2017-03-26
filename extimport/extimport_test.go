@@ -192,7 +192,7 @@ func TestExtimport(t *testing.T) {
 				},
 			},
 			verify: func(files map[string]gofiles.GoFile, got string, err error, caseNum int, caseName string) {
-				require.Error(t, err, "Case %d (%s)", caseNum, caseName)
+				require.Error(t, err, fmt.Sprintf("Case %d (%s)", caseNum, caseName))
 				want := fmt.Sprintf("%s:1:22: imports external package %s\n", files["foo/foo.go"].Path, files["bar/bar.go"].ImportPath)
 				assert.Equal(t, want, got, "Case %d (%s)", caseNum, caseName)
 			},
@@ -226,7 +226,7 @@ func TestExtimport(t *testing.T) {
 				},
 			},
 			verify: func(files map[string]gofiles.GoFile, got string, err error, caseNum int, caseName string) {
-				require.Error(t, err, "Case %d (%s)", caseNum, caseName)
+				require.Error(t, err, fmt.Sprintf("Case %d (%s)", caseNum, caseName))
 				want := fmt.Sprintf("%s:1:22: imports external package %s\n", files["foo/foo.go"].Path, files["bar/bar.go"].ImportPath)
 				want += fmt.Sprintf("%s:1:22: imports external package %s\n", files["foo/another/foo.go"].Path, files["baz/baz.go"].ImportPath)
 				assert.Equal(t, want, got, "Case %d (%s)", caseNum, caseName)
@@ -258,7 +258,7 @@ func TestExtimport(t *testing.T) {
 				},
 			},
 			verify: func(files map[string]gofiles.GoFile, got string, err error, caseNum int, caseName string) {
-				require.Error(t, err, "Case %d (%s)", caseNum, caseName)
+				require.Error(t, err, fmt.Sprintf("Case %d (%s)", caseNum, caseName))
 				want := fmt.Sprintf("%s:1:27: imports external package %s\n", files["foo/foo_test.go"].Path, files["bar/bar.go"].ImportPath)
 				assert.Equal(t, want, got, "Case %d (%s)", caseNum, caseName)
 			},
@@ -292,7 +292,7 @@ func TestExtimport(t *testing.T) {
 				},
 			},
 			verify: func(files map[string]gofiles.GoFile, got string, err error, caseNum int, caseName string) {
-				require.Error(t, err, "Case %d (%s)", caseNum, caseName)
+				require.Error(t, err, fmt.Sprintf("Case %d (%s)", caseNum, caseName))
 				want := fmt.Sprintf("%s:1:22: imports external package %s transitively via %s -> %s\n", files["foo/foo.go"].Path, files["ext/ext.go"].ImportPath, files["foo/vendor/github.com/org/product/bar/bar.go"].ImportPath, files["foo/vendor/github.com/org/product/baz/baz.go"].ImportPath)
 				assert.Equal(t, want, got, "Case %d (%s)", caseNum, caseName)
 			},
@@ -323,7 +323,7 @@ func TestExtimport(t *testing.T) {
 				},
 			},
 			verify: func(files map[string]gofiles.GoFile, got string, err error, caseNum int, caseName string) {
-				require.Error(t, err, "Case %d (%s)", caseNum, caseName)
+				require.Error(t, err, fmt.Sprintf("Case %d (%s)", caseNum, caseName))
 				want := fmt.Sprintf("%s:1:22: imports external package %s\n", files["foo/foo.go"].Path, files["ext/ext.go"].ImportPath)
 				assert.Equal(t, want, got, "Case %d (%s)", caseNum, caseName)
 			},
@@ -363,7 +363,7 @@ func TestExtimport(t *testing.T) {
 				},
 			},
 			verify: func(files map[string]gofiles.GoFile, got string, err error, caseNum int, caseName string) {
-				require.Error(t, err, "Case %d (%s)", caseNum, caseName)
+				require.Error(t, err, fmt.Sprintf("Case %d (%s)", caseNum, caseName))
 				want := fmt.Sprintf("%s:1:22: imports external package %s\n", files["foo/foo.go"].Path, files["ext/ext.go"].ImportPath)
 				assert.Equal(t, want, got, "Case %d (%s)", caseNum, caseName)
 			},
@@ -403,7 +403,7 @@ func TestExtimport(t *testing.T) {
 				},
 			},
 			verify: func(files map[string]gofiles.GoFile, got string, err error, caseNum int, caseName string) {
-				require.Error(t, err, "Case %d (%s)", caseNum, caseName)
+				require.Error(t, err, fmt.Sprintf("Case %d (%s)", caseNum, caseName))
 				want := fmt.Sprintf("%s:1:22: imports external package %s transitively via %s\n", files["foo/foo.go"].Path, files["ext/ext.go"].ImportPath, files["foo/vendor/github.com/org/product/bar/bar.go"].ImportPath)
 				want += fmt.Sprintf("%s:1:59: imports external package %s transitively via %s\n", files["foo/foo.go"].Path, files["ext/ext.go"].ImportPath, files["foo/vendor/github.com/org/product/baz/baz.go"].ImportPath)
 				assert.Equal(t, want, got, "Case %d (%s)", caseNum, caseName)
