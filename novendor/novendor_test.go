@@ -188,6 +188,22 @@ package bar; import _ "{{index . "vendor/github.com/org/library/subpackage_linux
 				},
 			},
 		},
+		{
+			name: "does not consider vendored libraries in hidden directories",
+			getArgs: func(projectDir string) (string, []string) {
+				return path.Join(projectDir), nil
+			},
+			files: []gofiles.GoFileSpec{
+				{
+					RelPath: "foo.go",
+					Src:     `package main`,
+				},
+				{
+					RelPath: ".hidden/vendor/github.com/org/library/bar/bar.go",
+					Src:     `package bar`,
+				},
+			},
+		},
 	} {
 		currTmpDir, err := ioutil.TempDir(tmpDir, "")
 		require.NoError(t, err, "Case %d (%s)", i, currCase.name)
