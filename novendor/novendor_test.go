@@ -205,7 +205,7 @@ package bar; import _ "{{index . "vendor/github.com/org/library/subpackage_linux
 
 func verifyDoMain(t *testing.T, caseNum int, name, dir string, args []string, group, full bool, checkType string, f func(map[string]gofiles.GoFile) []string, files map[string]gofiles.GoFile) {
 	buf := bytes.Buffer{}
-	doMainErr := doNovendor(dir, args, group, full, &buf)
+	doMainErr := doNovendor(dir, args, group, full, false, &buf)
 	expectedOutput := ""
 	if f != nil {
 		expectedOutput = fmt.Sprintln(strings.Join(f(files), "\n"))
