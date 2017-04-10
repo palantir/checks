@@ -216,27 +216,37 @@ func getUnusedVendoredPkgs(allProjectPkgs, allVendoredPkgs map[string]bool, grou
 func getAllVendoredPkgs(projectRoot string) (map[string]bool, error) {
 	vendoredPkgs := make(map[string]bool)
 	err := filepath.Walk(projectRoot, func(currPath string, info os.FileInfo, err error) error {
-		if info.IsDir() {
-			rel, err := filepath.Rel(projectRoot, currPath)
-			if err != nil {
-				return err
+		if !info.IsDir() {
+			return nil
+		}
+
+		rel, err := filepath.Rel(projectRoot, currPath)
+		if err != nil {
+			return err
+		}
+		inVendorDir := false
+		skipDirectory := false
+		for _, currPart := range strings.Split(rel, "/") {
+			if currPart == "vendor" {
+				inVendorDir = true
+				break
 			}
-			inVendorDir := false
-			for _, currPart := range strings.Split(rel, "/") {
-				if currPart == "vendor" {
-					inVendorDir = true
-					break
-				}
+			if strings.HasPrefix(currPart, ".") {
+				skipDirectory = true
+				break
 			}
-			if inVendorDir {
-				// if this is a directory in a vendor directory, attempt to parse as a package
-				pkg, err := doImport(".", currPath, build.ImportComment)
-				// record import path if package could be parsed and import path is not "." (which can
-				// happen for some directories like testdata which cannot be imported)
-				if err == nil && pkg.ImportPath != "." {
-					vendoredPkgs[pkg.ImportPath] = true
-				}
-			}
+		}
+
+		if skipDirectory || !inVendorDir {
+			return nil
+		}
+
+		// directory is in a vendor directory: attempt to parse as a package
+		pkg, err := doImport(".", currPath, build.ImportComment)
+		// record import path if package could be parsed and import path is not "." (which can
+		// happen for some directories like testdata which cannot be imported)
+		if err == nil && pkg.ImportPath != "." {
+			vendoredPkgs[pkg.ImportPath] = true
 		}
 		return nil
 	})
