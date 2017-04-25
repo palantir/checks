@@ -1,10 +1,10 @@
 root-dirs:
-  - badfuncs
   - compiles
   - extimport
   - gocd
   - gogenerate
   - golicense
+  - nobadfuncs
   - novendor
   - outparamcheck
   - ptimports

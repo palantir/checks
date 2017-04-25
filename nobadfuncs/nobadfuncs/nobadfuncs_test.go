@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package badfuncs_test
+package nobadfuncs_test
 
 import (
 	"bytes"
@@ -29,7 +29,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/palantir/checks/badfuncs/badfuncs"
+	"github.com/palantir/checks/nobadfuncs/nobadfuncs"
 )
 
 func TestPrintFuncRefUsages(t *testing.T) {
@@ -231,7 +231,7 @@ func TypeAlias() {
 		}
 
 		var got bytes.Buffer
-		_, err = badfuncs.PrintBadFuncRefs(pkgs, currCase.sigs, &got)
+		_, err = nobadfuncs.PrintBadFuncRefs(pkgs, currCase.sigs, &got)
 		require.NoError(t, err, "Case %d: %s", i, currCase.name)
 
 		assert.Equal(t, currCase.want(currCaseTmpDir), got.String(), "Case %d: %s\nOutput:\n%s", i, currCase.name, got.String())
@@ -340,7 +340,7 @@ func (b BarType) Bar(in BarType) BarType {
 		}
 
 		var got bytes.Buffer
-		err = badfuncs.PrintAllFuncRefs(pkgs, &got)
+		err = nobadfuncs.PrintAllFuncRefs(pkgs, &got)
 		require.NoError(t, err, "Case %d: %s", i, currCase.name)
 
 		assert.Equal(t, currCase.want(currCaseTmpDir), got.String(), "Case %d: %s\nOutput:\n%s", i, currCase.name, got.String())

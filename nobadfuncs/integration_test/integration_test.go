@@ -28,8 +28,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestBadFuncs(t *testing.T) {
-	cli, err := products.Bin("badfuncs")
+func TestNoBadFuncs(t *testing.T) {
+	cli, err := products.Bin("nobadfuncs")
 	require.NoError(t, err)
 
 	wd, err := os.Getwd()
