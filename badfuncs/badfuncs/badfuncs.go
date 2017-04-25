@@ -12,18 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package nocall
+package badfuncs
 
 import (
 	"fmt"
 	"go/ast"
-	"go/importer"
+	"go/build"
 	"go/parser"
 	"go/token"
 	"go/types"
 	"io"
 	"regexp"
 	"sort"
+
+	"github.com/pkg/errors"
+	"golang.org/x/tools/go/loader"
 )
 
 // FuncRef is a reference to a specific function. Matches the string representation of *types.Func, which is of the
@@ -31,64 +34,73 @@ import (
 type FuncRef string
 
 func PrintAllFuncRefs(pkgs []string, stdout io.Writer) error {
-	return printFuncRefUsages(pkgs, nil, stdout)
+	_, err := printFuncRefUsages(pkgs, nil, stdout)
+	return err
 }
 
-func PrintFuncRefUsages(pkgs []string, sigs map[string]string, stdout io.Writer) error {
+func PrintBadFuncRefs(pkgs []string, sigs map[string]string, stdout io.Writer) (bool, error) {
 	if len(sigs) == 0 {
 		// if there are no signatures, there will be no output
-		return nil
+		return true, nil
 	}
 	return printFuncRefUsages(pkgs, sigs, stdout)
 }
 
-func printFuncRefUsages(pkgs []string, sigs map[string]string, stdout io.Writer) error {
+func printFuncRefUsages(pkgs []string, sigs map[string]string, stdout io.Writer) (bool, error) {
+	loadcfg := loader.Config{
+		Build:      &build.Default,
+		ParserMode: parser.ParseComments,
+	}
+	// add all packages to load
 	for _, currPkg := range pkgs {
-		fset := token.NewFileSet()
-		parsedPkgs, _ := parser.ParseDir(fset, currPkg, nil, parser.ParseComments)
+		loadcfg.ImportWithTests(currPkg)
+	}
 
-		var pkgNames []string
-		for k := range parsedPkgs {
-			pkgNames = append(pkgNames, k)
+	// load program
+	prog, err := loadcfg.Load()
+	if err != nil {
+		return false, errors.Wrapf(err, "failed to load program")
+	}
+	sort.Strings(pkgs)
+
+	noBadRefs := true
+	for _, currPkg := range pkgs {
+		info := prog.Package(currPkg)
+		if info == nil {
+			panic(fmt.Sprintf("failed to find %s in %v; imported %v", currPkg, prog.AllPackages, prog.Imported))
 		}
-		sort.Strings(pkgNames)
-		for _, k := range pkgNames {
-			var fileNames []string
-			for currFilename := range parsedPkgs[k].Files {
-				fileNames = append(fileNames, currFilename)
+
+		for _, currFile := range info.Files {
+			currOutput, err := findFuncRefUsage(info.Info, currFile, prog.Fset, sigs)
+			if err != nil {
+				return false, err
 			}
-			sort.Strings(fileNames)
-			for _, currFilename := range fileNames {
-				currOutput, err := findFuncRefUsage(currPkg, parsedPkgs[k].Files[currFilename], fset, sigs)
-				if err != nil {
-					return err
-				}
 
-				if len(sigs) == 0 {
-					// "all" mode -- print all references
-					visitInOrder(currOutput, func(pos token.Position, ref FuncRef) {
-						fmt.Fprintf(stdout, "%s: %s\n", pos.String(), ref)
-					})
-					continue
-				}
-
-				// filter out any matches that have a whitelist comment
-				filterFuncRefs(currOutput, okCommentRegxp.MatchString)
-
+			if len(sigs) == 0 {
+				// "all" mode -- print all references
 				visitInOrder(currOutput, func(pos token.Position, ref FuncRef) {
-					reason, ok := sigs[string(ref)]
-					if !ok {
-						return
-					}
-					if reason == "" {
-						reason = fmt.Sprintf("references to %q are not allowed. Remove this reference or whitelist it by adding a comment of the form '// OK: [reason]' to the line before it.", ref)
-					}
-					fmt.Fprintf(stdout, "%s: %s\n", pos.String(), reason)
+					fmt.Fprintf(stdout, "%s: %s\n", pos.String(), ref)
 				})
+				continue
 			}
+
+			// filter out any matches that have a whitelist comment
+			filterFuncRefs(currOutput, okCommentRegxp.MatchString)
+
+			visitInOrder(currOutput, func(pos token.Position, ref FuncRef) {
+				reason, ok := sigs[string(ref)]
+				if !ok {
+					return
+				}
+				noBadRefs = false
+				if reason == "" {
+					reason = fmt.Sprintf("references to %q are not allowed. Remove this reference or whitelist it by adding a comment of the form '// OK: [reason]' to the line before it.", ref)
+				}
+				fmt.Fprintf(stdout, "%s: %s\n", pos.String(), reason)
+			})
 		}
 	}
-	return nil
+	return noBadRefs, nil
 }
 
 // matches a single-line comment beginning with "// OK: " followed by at least one non-whitespace character.
@@ -129,21 +141,13 @@ func (a posSlice) Less(i, j int) bool {
 	if a[i].Line != a[j].Line {
 		return a[i].Line < a[j].Line
 	}
-	return a[j].Column < a[j].Column
+	return a[i].Column < a[j].Column
 }
 
 // findFuncRefUsage returns all of the function references in the specified package. If "sigs" is non-empty, then only
 // function signature that match a key in the "sigs" map are included; otherwise, all function references are returned.
-func findFuncRefUsage(pkgPath string, f *ast.File, fset *token.FileSet, sigs map[string]string) (map[FuncRef]map[token.Position]string, error) {
+func findFuncRefUsage(info types.Info, f *ast.File, fset *token.FileSet, sigs map[string]string) (map[FuncRef]map[token.Position]string, error) {
 	rv := make(map[FuncRef]map[token.Position]string)
-
-	conf := types.Config{Importer: importer.Default()}
-	info := &types.Info{
-		Uses: make(map[*ast.Ident]types.Object),
-	}
-	if _, err := conf.Check(pkgPath, fset, []*ast.File{f}, info); err != nil {
-		return nil, err
-	}
 
 	// map from line to comments in file
 	lineToComment := make(map[int]string)
@@ -166,6 +170,9 @@ func findFuncRefUsage(pkgPath string, f *ast.File, fset *token.FileSet, sigs map
 			continue
 		}
 
+		// transform function to a form where names are removed from receivers, params and return values
+		// and package references have path to the vendor directory removed.
+		funcPtr = toFuncWithNoIdentifiersRemoveVendor(funcPtr)
 		currSig := FuncRef(funcPtr.String())
 
 		if len(sigs) > 0 {
