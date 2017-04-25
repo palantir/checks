@@ -47,6 +47,12 @@
 			"revisionTime": "2016-11-01T05:21:29Z"
 		},
 		{
+			"checksumSHA1": "k5L5C6+5yoiXoMlDbZubqnihLz8=",
+			"path": "github.com/palantir/godel/pkg/products",
+			"revision": "dee7e0a51f999f38cafa551682113b85acea71cf",
+			"revisionTime": "2017-04-24T17:44:42Z"
+		},
+		{
 			"checksumSHA1": "csaM9q2Qqj12DpxMSXS3V+a5qdY=",
 			"path": "github.com/palantir/pkg/cli",
 			"revision": "c60ea2d471b77fae0cd4219bd329bd7e0e01d5b8",
