@@ -25,7 +25,7 @@ import (
 	"github.com/palantir/pkg/pkgpath"
 	"github.com/pkg/errors"
 
-	"github.com/palantir/checks/badfuncs/badfuncs"
+	"github.com/palantir/checks/nobadfuncs/nobadfuncs"
 )
 
 const (
@@ -66,7 +66,7 @@ func main() {
 		}
 
 		if ctx.Bool(printAllFlagName) {
-			if err := badfuncs.PrintAllFuncRefs(pkgPaths, ctx.App.Stdout); err != nil {
+			if err := nobadfuncs.PrintAllFuncRefs(pkgPaths, ctx.App.Stdout); err != nil {
 				return errors.Wrapf(err, "Failed to determine all function references")
 			}
 			return nil
@@ -78,9 +78,9 @@ func main() {
 				return errors.Wrapf(err, "failed to read configuration")
 			}
 		}
-		ok, err := badfuncs.PrintBadFuncRefs(pkgPaths, jsonConfig, ctx.App.Stdout)
+		ok, err := nobadfuncs.PrintBadFuncRefs(pkgPaths, jsonConfig, ctx.App.Stdout)
 		if err != nil {
-			return errors.Wrapf(err, "nocall failed")
+			return errors.Wrapf(err, "nobadfuncs failed")
 		}
 		if !ok {
 			// if there was no error but bad references were found, return empty error

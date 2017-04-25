@@ -1,12 +1,12 @@
 products:
-  badfuncs:
+  nobadfuncs:
     build:
-      output-dir: ./badfuncs/build
-      main-pkg: ./badfuncs/
+      output-dir: ./nobadfuncs/build
+      main-pkg: ./nobadfuncs/
       environment:
         CGO_ENABLED: "0"
     dist:
-      output-dir: ./badfuncs/dist
+      output-dir: ./nobadfuncs/dist
       dist-type:
         type: bin
         info:

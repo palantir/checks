@@ -5,8 +5,8 @@
             "numGoFiles": 2,
             "numImportedGoFiles": 0,
             "importedFrom": [
-                "github.com/palantir/checks/badfuncs",
-                "github.com/palantir/checks/badfuncs/badfuncs"
+                "github.com/palantir/checks/nobadfuncs",
+                "github.com/palantir/checks/nobadfuncs/nobadfuncs"
             ]
         },
         {
@@ -14,7 +14,7 @@
             "numGoFiles": 6,
             "numImportedGoFiles": 8,
             "importedFrom": [
-                "github.com/palantir/checks/badfuncs/badfuncs"
+                "github.com/palantir/checks/nobadfuncs/nobadfuncs"
             ]
         }
     ],
@@ -24,7 +24,7 @@
             "numGoFiles": 1,
             "numImportedGoFiles": 2,
             "importedFrom": [
-                "github.com/palantir/checks/badfuncs"
+                "github.com/palantir/checks/nobadfuncs"
             ]
         },
         {
@@ -32,7 +32,7 @@
             "numGoFiles": 17,
             "numImportedGoFiles": 17,
             "importedFrom": [
-                "github.com/palantir/checks/badfuncs"
+                "github.com/palantir/checks/nobadfuncs"
             ]
         },
         {
@@ -40,7 +40,7 @@
             "numGoFiles": 7,
             "numImportedGoFiles": 3,
             "importedFrom": [
-                "github.com/palantir/checks/badfuncs"
+                "github.com/palantir/checks/nobadfuncs"
             ]
         },
         {
@@ -48,8 +48,8 @@
             "numGoFiles": 1,
             "numImportedGoFiles": 3,
             "importedFrom": [
-                "github.com/palantir/checks/badfuncs",
-                "github.com/palantir/checks/badfuncs/badfuncs_test"
+                "github.com/palantir/checks/nobadfuncs",
+                "github.com/palantir/checks/nobadfuncs/nobadfuncs_test"
             ]
         }
     ],
@@ -59,8 +59,8 @@
             "numGoFiles": 2,
             "numImportedGoFiles": 0,
             "importedFrom": [
-                "github.com/palantir/checks/badfuncs/badfuncs_test",
-                "github.com/palantir/checks/badfuncs/integration_test_test"
+                "github.com/palantir/checks/nobadfuncs/integration_test_test",
+                "github.com/palantir/checks/nobadfuncs/nobadfuncs_test"
             ]
         },
         {
@@ -68,8 +68,8 @@
             "numGoFiles": 1,
             "numImportedGoFiles": 0,
             "importedFrom": [
-                "github.com/palantir/checks/badfuncs/badfuncs_test",
-                "github.com/palantir/checks/badfuncs/integration_test_test"
+                "github.com/palantir/checks/nobadfuncs/integration_test_test",
+                "github.com/palantir/checks/nobadfuncs/nobadfuncs_test"
             ]
         },
         {
@@ -77,7 +77,7 @@
             "numGoFiles": 1,
             "numImportedGoFiles": 0,
             "importedFrom": [
-                "github.com/palantir/checks/badfuncs/integration_test_test"
+                "github.com/palantir/checks/nobadfuncs/integration_test_test"
             ]
         },
         {
@@ -85,8 +85,8 @@
             "numGoFiles": 6,
             "numImportedGoFiles": 9,
             "importedFrom": [
-                "github.com/palantir/checks/badfuncs/badfuncs_test",
-                "github.com/palantir/checks/badfuncs/integration_test_test"
+                "github.com/palantir/checks/nobadfuncs/integration_test_test",
+                "github.com/palantir/checks/nobadfuncs/nobadfuncs_test"
             ]
         },
         {
@@ -94,8 +94,8 @@
             "numGoFiles": 5,
             "numImportedGoFiles": 15,
             "importedFrom": [
-                "github.com/palantir/checks/badfuncs/badfuncs_test",
-                "github.com/palantir/checks/badfuncs/integration_test_test"
+                "github.com/palantir/checks/nobadfuncs/integration_test_test",
+                "github.com/palantir/checks/nobadfuncs/nobadfuncs_test"
             ]
         }
     ]
