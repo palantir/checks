@@ -1,12 +1,12 @@
 products:
-  nocall:
+  badfuncs:
     build:
-      output-dir: ./nocall/build
-      main-pkg: ./nocall/
+      output-dir: ./badfuncs/build
+      main-pkg: ./badfuncs/
       environment:
         CGO_ENABLED: "0"
     dist:
-      output-dir: ./nocall/dist
+      output-dir: ./badfuncs/dist
       dist-type:
         type: bin
         info:

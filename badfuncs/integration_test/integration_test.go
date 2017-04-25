@@ -15,6 +15,7 @@
 package integration_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -27,8 +28,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNoCall(t *testing.T) {
-	cli, err := products.Bin("nocall")
+func TestBadFuncs(t *testing.T) {
+	cli, err := products.Bin("badfuncs")
 	require.NoError(t, err)
 
 	wd, err := os.Getwd()
@@ -42,8 +43,35 @@ func TestNoCall(t *testing.T) {
 		name          string
 		filesToCreate []gofiles.GoFileSpec
 		args          []string
-		wantStdout    string
+		expectErr     bool
+		wantStdout    func(currTestCaseDir string) string
 	}{
+		{
+			name: "Empty configuration has blank output",
+			filesToCreate: []gofiles.GoFileSpec{
+				{
+					RelPath: "foo/foo.go",
+					Src: `
+package foo
+
+import (
+	"net/http"
+)
+
+func MyFunction() {
+	http.DefaultClient.Do(nil)
+}
+`,
+				},
+			},
+			args: []string{
+				"./foo",
+			},
+			expectErr: false,
+			wantStdout: func(currTestCaseDir string) string {
+				return ""
+			},
+		},
 		{
 			name: "Basic case",
 			filesToCreate: []gofiles.GoFileSpec{
@@ -63,11 +91,14 @@ func MyFunction() {
 				},
 			},
 			args: []string{
-				"--json",
-				`{"func (*net/http.Client).Do(req *net/http.Request) (*net/http.Response, error)": ""}`,
+				"--config",
+				`{"func (*net/http.Client).Do(*net/http.Request) (*net/http.Response, error)": ""}`,
 				"./foo",
 			},
-			wantStdout: "foo/foo.go:9:21: references to \"func (*net/http.Client).Do(req *net/http.Request) (*net/http.Response, error)\" are not allowed. Remove this reference or whitelist it by adding a comment of the form '// OK: [reason]' to the line before it.\n",
+			expectErr: true,
+			wantStdout: func(currTestCaseDir string) string {
+				return fmt.Sprintf("%s/foo/foo.go:9:21: references to \"func (*net/http.Client).Do(*net/http.Request) (*net/http.Response, error)\" are not allowed. Remove this reference or whitelist it by adding a comment of the form '// OK: [reason]' to the line before it.\n", currTestCaseDir)
+			},
 		},
 		{
 			name: "All flag",
@@ -91,7 +122,10 @@ func MyFunction() {
 				"--all",
 				"./foo",
 			},
-			wantStdout: "foo/foo.go:9:21: func (*net/http.Client).Do(req *net/http.Request) (*net/http.Response, error)\n",
+			expectErr: false,
+			wantStdout: func(currTestCaseDir string) string {
+				return fmt.Sprintf("%s/foo/foo.go:9:21: func (*net/http.Client).Do(*net/http.Request) (*net/http.Response, error)\n", currTestCaseDir)
+			},
 		},
 	} {
 		currCaseTmpDir, err := ioutil.TempDir(tmpDir, "")
@@ -111,9 +145,14 @@ func MyFunction() {
 
 			cmd := exec.Command(cli, currCase.args...)
 			output, err = cmd.CombinedOutput()
-			require.NoError(t, err, "Case %d: %s\nOutput: %s", i, currCase.name, string(output))
+
+			if currCase.expectErr {
+				require.Error(t, err, fmt.Sprintf("Case %d: %s\nOutput: %s", i, currCase.name, string(output)))
+			} else {
+				require.NoError(t, err, "Case %d: %s\nOutput: %s", i, currCase.name, string(output))
+			}
 		}()
 
-		assert.Equal(t, currCase.wantStdout, string(output), "Case %d: %s\nOutput:\n%s", i, currCase.name, string(output))
+		assert.Equal(t, currCase.wantStdout(currCaseTmpDir), string(output), "Case %d: %s\nOutput:\n%s", i, currCase.name, string(output))
 	}
 }

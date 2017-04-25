@@ -12,25 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package nocall_test
+package badfuncs_test
 
 import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 	"testing"
 
 	"github.com/nmiyake/pkg/dirs"
 	"github.com/nmiyake/pkg/gofiles"
+	"github.com/palantir/pkg/pkgpath"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/palantir/checks/nocall/nocall"
+	"github.com/palantir/checks/badfuncs/badfuncs"
 )
 
 func TestPrintFuncRefUsages(t *testing.T) {
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+
 	tmpDir, cleanup, err := dirs.TempDir(".", "")
 	defer cleanup()
 	require.NoError(t, err)
@@ -50,7 +55,7 @@ func TestPrintFuncRefUsages(t *testing.T) {
 				},
 			},
 			sigs: map[string]string{
-				"func (*net/http.Client).Do(req *net/http.Request) (*net/http.Response, error)": "",
+				"func (*net/http.Client).Do(*net/http.Request) (*net/http.Response, error)": "",
 			},
 			want: func(testDir string) string {
 				return ""
@@ -75,10 +80,43 @@ func MyFunction() {
 				},
 			},
 			sigs: map[string]string{
-				"func (*net/http.Client).Do(req *net/http.Request) (*net/http.Response, error)": "",
+				"func (*net/http.Client).Do(*net/http.Request) (*net/http.Response, error)": "",
 			},
 			want: func(testDir string) string {
-				return fmt.Sprintf("%s:9:21: references to \"func (*net/http.Client).Do(req *net/http.Request) (*net/http.Response, error)\" are not allowed. Remove this reference or whitelist it by adding a comment of the form '// OK: [reason]' to the line before it.\n", path.Join(testDir, "foo/foo.go"))
+				return fmt.Sprintf("%s:9:21: references to \"func (*net/http.Client).Do(*net/http.Request) (*net/http.Response, error)\" are not allowed. Remove this reference or whitelist it by adding a comment of the form '// OK: [reason]' to the line before it.\n", path.Join(wd, testDir, "foo/foo.go"))
+			},
+		},
+		{
+			name: "function signature matches through vendors",
+			specs: []gofiles.GoFileSpec{
+				{
+					RelPath: "foo/foo.go",
+					Src: `
+package foo
+
+import (
+	"github.com/bar"
+)
+
+func MyFunction() {
+	bar.Bar()
+}
+`,
+				},
+				{
+					RelPath: "vendor/github.com/bar/bar.go",
+					Src: `
+package bar
+
+func Bar() {}
+`,
+				},
+			},
+			sigs: map[string]string{
+				"func github.com/bar.Bar()": "",
+			},
+			want: func(testDir string) string {
+				return fmt.Sprintf("%s:9:6: references to \"func github.com/bar.Bar()\" are not allowed. Remove this reference or whitelist it by adding a comment of the form '// OK: [reason]' to the line before it.\n", path.Join(wd, testDir, "foo/foo.go"))
 			},
 		},
 		{
@@ -100,10 +138,10 @@ func MyFunction() {
 				},
 			},
 			sigs: map[string]string{
-				"func (*net/http.Client).Do(req *net/http.Request) (*net/http.Response, error)": "TEST: don't use this please",
+				"func (*net/http.Client).Do(*net/http.Request) (*net/http.Response, error)": "TEST: don't use this please",
 			},
 			want: func(testDir string) string {
-				return fmt.Sprintf("%s:9:21: TEST: don't use this please\n", path.Join(testDir, "foo/foo.go"))
+				return fmt.Sprintf("%s:9:21: TEST: don't use this please\n", path.Join(wd, testDir, "foo/foo.go"))
 			},
 		},
 		{
@@ -126,7 +164,7 @@ func MyFunction() {
 				},
 			},
 			sigs: map[string]string{
-				"func (*net/http.Client).Do(req *net/http.Request) (*net/http.Response, error)": "",
+				"func (*net/http.Client).Do(*net/http.Request) (*net/http.Response, error)": "",
 			},
 			want: func(testDir string) string {
 				return ""
@@ -168,13 +206,13 @@ func TypeAlias() {
 				},
 			},
 			sigs: map[string]string{
-				"func (*net/http.Client).Do(req *net/http.Request) (*net/http.Response, error)": "No",
+				"func (*net/http.Client).Do(*net/http.Request) (*net/http.Response, error)": "No",
 			},
 			want: func(testDir string) string {
 				return strings.Join([]string{
-					fmt.Sprintf("%s:9:30: No", path.Join(testDir, "foo/foo.go")),
-					fmt.Sprintf("%s:19:11: No", path.Join(testDir, "foo/foo.go")),
-					fmt.Sprintf("%s:26:21: No", path.Join(testDir, "foo/foo.go")),
+					fmt.Sprintf("%s:9:30: No", path.Join(wd, testDir, "foo/foo.go")),
+					fmt.Sprintf("%s:19:11: No", path.Join(wd, testDir, "foo/foo.go")),
+					fmt.Sprintf("%s:26:21: No", path.Join(wd, testDir, "foo/foo.go")),
 				}, "\n") + "\n"
 			},
 		},
@@ -185,13 +223,15 @@ func TypeAlias() {
 		files, err := gofiles.Write(currCaseTmpDir, currCase.specs)
 		require.NoError(t, err, "Case %d: %s", i, currCase.name)
 
-		var paths []string
-		for key := range files {
-			paths = append(paths, path.Dir(path.Join(currCaseTmpDir, key)))
+		var pkgs []string
+		for _, val := range files {
+			currPkg, err := pkgpath.NewAbsPkgPath(path.Dir(val.Path)).GoPathSrcRel()
+			require.NoError(t, err)
+			pkgs = append(pkgs, currPkg)
 		}
 
 		var got bytes.Buffer
-		err = nocall.PrintFuncRefUsages(paths, currCase.sigs, &got)
+		_, err = badfuncs.PrintBadFuncRefs(pkgs, currCase.sigs, &got)
 		require.NoError(t, err, "Case %d: %s", i, currCase.name)
 
 		assert.Equal(t, currCase.want(currCaseTmpDir), got.String(), "Case %d: %s\nOutput:\n%s", i, currCase.name, got.String())
@@ -200,6 +240,9 @@ func TypeAlias() {
 }
 
 func TestPrintAllFuncRefs(t *testing.T) {
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+
 	tmpDir, cleanup, err := dirs.TempDir(".", "")
 	defer cleanup()
 	require.NoError(t, err)
@@ -224,6 +267,7 @@ import (
 
 func MyFunction() {
 	http.DefaultClient.Do(nil)
+	http.DefaultClient.PostForm("", nil)
 
 	// OK: this isn't ignored when printing all
 	fmt.Println("hello")
@@ -233,8 +277,51 @@ func MyFunction() {
 			},
 			want: func(testDir string) string {
 				return strings.Join([]string{
-					fmt.Sprintf("%s:10:21: func (*net/http.Client).Do(req *net/http.Request) (*net/http.Response, error)", path.Join(testDir, "foo/foo.go")),
-					fmt.Sprintf("%s:13:6: func fmt.Println(a ...interface{}) (n int, err error)", path.Join(testDir, "foo/foo.go")),
+					fmt.Sprintf("%s:10:21: func (*net/http.Client).Do(*net/http.Request) (*net/http.Response, error)", path.Join(wd, testDir, "foo/foo.go")),
+					fmt.Sprintf("%s:11:21: func (*net/http.Client).PostForm(string, net/url.Values) (*net/http.Response, error)", path.Join(wd, testDir, "foo/foo.go")),
+					fmt.Sprintf("%s:14:6: func fmt.Println(...interface{}) (int, error)", path.Join(wd, testDir, "foo/foo.go")),
+				}, "\n") + "\n"
+			},
+		},
+		{
+			name: "prints vendored signatures but omits vendor from package",
+			specs: []gofiles.GoFileSpec{
+				{
+					RelPath: "foo/foo.go",
+					Src: `
+package foo
+
+import (
+	"github.com/bar"
+)
+
+func MyFunction() {
+	var b bar.BarType
+	b.Bar(bar.BarType(""))
+
+	bar.FreeBar()
+}
+`,
+				},
+				{
+					RelPath: "vendor/github.com/bar/bar.go",
+					Src: `
+package bar
+
+type BarType string
+
+func FreeBar() {}
+
+func (b BarType) Bar(in BarType) BarType {
+	return in
+}
+`,
+				},
+			},
+			want: func(testDir string) string {
+				return strings.Join([]string{
+					fmt.Sprintf("%s:10:4: func (github.com/bar.BarType).Bar(github.com/bar.BarType) github.com/bar.BarType", path.Join(wd, testDir, "foo/foo.go")),
+					fmt.Sprintf("%s:12:6: func github.com/bar.FreeBar()", path.Join(wd, testDir, "foo/foo.go")),
 				}, "\n") + "\n"
 			},
 		},
@@ -245,13 +332,15 @@ func MyFunction() {
 		files, err := gofiles.Write(currCaseTmpDir, currCase.specs)
 		require.NoError(t, err, "Case %d: %s", i, currCase.name)
 
-		var paths []string
-		for key := range files {
-			paths = append(paths, path.Dir(path.Join(currCaseTmpDir, key)))
+		var pkgs []string
+		for _, val := range files {
+			currPkg, err := pkgpath.NewAbsPkgPath(path.Dir(val.Path)).GoPathSrcRel()
+			require.NoError(t, err)
+			pkgs = append(pkgs, currPkg)
 		}
 
 		var got bytes.Buffer
-		err = nocall.PrintAllFuncRefs(paths, &got)
+		err = badfuncs.PrintAllFuncRefs(pkgs, &got)
 		require.NoError(t, err, "Case %d: %s", i, currCase.name)
 
 		assert.Equal(t, currCase.want(currCaseTmpDir), got.String(), "Case %d: %s\nOutput:\n%s", i, currCase.name, got.String())
