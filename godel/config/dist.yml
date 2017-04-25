@@ -1,0 +1,13 @@
+products:
+  nocall:
+    build:
+      output-dir: ./nocall/build
+      main-pkg: ./nocall/
+      environment:
+        CGO_ENABLED: "0"
+    dist:
+      output-dir: ./nocall/dist
+      dist-type:
+        type: bin
+        info:
+          omit-init-sh: true

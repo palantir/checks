@@ -4,6 +4,7 @@ root-dirs:
   - gocd
   - gogenerate
   - golicense
+  - nocall
   - novendor
   - outparamcheck
   - ptimports

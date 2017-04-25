@@ -52,6 +52,12 @@ stages:
       - type: shell
         name: "Run godel verification"
         command: ./godelw verify --apply=false --junit-output="/tmp/test-results/$PROJECT-$(eval "$GET_GO_VERSION")/$PROJECT-$(eval "$GET_GO_VERSION")-tests.xml"
+      - type: shell
+        name: "Create integration test output directory"
+        command: mkdir -p "/tmp/test-results/$PROJECT-integration-$(eval "$GET_GO_VERSION")"
+      - type: shell
+        name: "Run godel integration tests"
+        command: ./godelw test --tags=integration --junit-output="/tmp/test-results/$PROJECT-integration-$(eval "$GET_GO_VERSION")/$PROJECT-$(eval "$GET_GO_VERSION")-tests.xml"
       - type: test-results-store
         path: /tmp/test-results
       - type: artifacts-store

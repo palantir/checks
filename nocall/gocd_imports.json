@@ -1,0 +1,83 @@
+{
+    "imports": [],
+    "mainOnlyImports": [
+        {
+            "path": "github.com/palantir/checks/vendor/github.com/nmiyake/pkg/errorstringer",
+            "numGoFiles": 1,
+            "numImportedGoFiles": 2,
+            "importedFrom": [
+                "github.com/palantir/checks/nocall"
+            ]
+        },
+        {
+            "path": "github.com/palantir/checks/vendor/github.com/palantir/pkg/cli",
+            "numGoFiles": 17,
+            "numImportedGoFiles": 17,
+            "importedFrom": [
+                "github.com/palantir/checks/nocall"
+            ]
+        },
+        {
+            "path": "github.com/palantir/checks/vendor/github.com/palantir/pkg/cli/flag",
+            "numGoFiles": 7,
+            "numImportedGoFiles": 3,
+            "importedFrom": [
+                "github.com/palantir/checks/nocall"
+            ]
+        },
+        {
+            "path": "github.com/palantir/checks/vendor/github.com/pkg/errors",
+            "numGoFiles": 2,
+            "numImportedGoFiles": 0,
+            "importedFrom": [
+                "github.com/palantir/checks/nocall"
+            ]
+        }
+    ],
+    "testOnlyImports": [
+        {
+            "path": "github.com/palantir/checks/vendor/github.com/nmiyake/pkg/dirs",
+            "numGoFiles": 2,
+            "numImportedGoFiles": 0,
+            "importedFrom": [
+                "github.com/palantir/checks/nocall/integration_test_test",
+                "github.com/palantir/checks/nocall/nocall_test"
+            ]
+        },
+        {
+            "path": "github.com/palantir/checks/vendor/github.com/nmiyake/pkg/gofiles",
+            "numGoFiles": 1,
+            "numImportedGoFiles": 0,
+            "importedFrom": [
+                "github.com/palantir/checks/nocall/integration_test_test",
+                "github.com/palantir/checks/nocall/nocall_test"
+            ]
+        },
+        {
+            "path": "github.com/palantir/checks/vendor/github.com/palantir/godel/pkg/products",
+            "numGoFiles": 1,
+            "numImportedGoFiles": 0,
+            "importedFrom": [
+                "github.com/palantir/checks/nocall/integration_test_test"
+            ]
+        },
+        {
+            "path": "github.com/palantir/checks/vendor/github.com/stretchr/testify/assert",
+            "numGoFiles": 6,
+            "numImportedGoFiles": 9,
+            "importedFrom": [
+                "github.com/palantir/checks/nocall/integration_test_test",
+                "github.com/palantir/checks/nocall/nocall_test"
+            ]
+        },
+        {
+            "path": "github.com/palantir/checks/vendor/github.com/stretchr/testify/require",
+            "numGoFiles": 5,
+            "numImportedGoFiles": 15,
+            "importedFrom": [
+                "github.com/palantir/checks/nocall/integration_test_test",
+                "github.com/palantir/checks/nocall/nocall_test"
+            ]
+        }
+    ]
+}

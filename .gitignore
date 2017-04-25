@@ -2,3 +2,5 @@
 *.ipr
 *.iws
 .idea/
+build/
+dist/
