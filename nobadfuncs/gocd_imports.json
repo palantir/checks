@@ -20,6 +20,16 @@
     ],
     "mainOnlyImports": [
         {
+            "path": "github.com/palantir/checks/vendor/github.com/nmiyake/pkg/dirs",
+            "numGoFiles": 2,
+            "numImportedGoFiles": 0,
+            "importedFrom": [
+                "github.com/palantir/checks/nobadfuncs",
+                "github.com/palantir/checks/nobadfuncs/integration_test_test",
+                "github.com/palantir/checks/nobadfuncs/nobadfuncs_test"
+            ]
+        },
+        {
             "path": "github.com/palantir/checks/vendor/github.com/nmiyake/pkg/errorstringer",
             "numGoFiles": 1,
             "numImportedGoFiles": 2,
@@ -54,15 +64,6 @@
         }
     ],
     "testOnlyImports": [
-        {
-            "path": "github.com/palantir/checks/vendor/github.com/nmiyake/pkg/dirs",
-            "numGoFiles": 2,
-            "numImportedGoFiles": 0,
-            "importedFrom": [
-                "github.com/palantir/checks/nobadfuncs/integration_test_test",
-                "github.com/palantir/checks/nobadfuncs/nobadfuncs_test"
-            ]
-        },
         {
             "path": "github.com/palantir/checks/vendor/github.com/nmiyake/pkg/gofiles",
             "numGoFiles": 1,

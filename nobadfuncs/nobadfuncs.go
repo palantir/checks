@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/nmiyake/pkg/dirs"
 	"github.com/nmiyake/pkg/errorstringer"
 	"github.com/palantir/pkg/cli"
 	"github.com/palantir/pkg/cli/flag"
@@ -92,7 +93,7 @@ func main() {
 }
 
 func getPkgPaths(relPaths []string) ([]string, error) {
-	wd, err := os.Getwd()
+	wd, err := dirs.GetwdEvalSymLinks()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get working directory")
 	}
