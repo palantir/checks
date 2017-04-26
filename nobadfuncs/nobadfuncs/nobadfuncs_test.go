@@ -325,6 +325,82 @@ func (b BarType) Bar(in BarType) BarType {
 				}, "\n") + "\n"
 			},
 		},
+		{
+			name: "deals with circular type definitions",
+			specs: []gofiles.GoFileSpec{
+				{
+					RelPath: "foo/foo.go",
+					Src: `
+package foo
+
+type StateFn func(*Lexer) StateFn
+
+type Lexer struct {
+	State StateFn
+}
+
+func LexText(l *Lexer) StateFn {
+	return LexEnter
+}
+
+func LexEnter(l *Lexer) StateFn {
+	return nil
+}
+`,
+				},
+			},
+			want: func(testDir string) string {
+				return fmt.Sprintf("%s:11:9: func github.com/palantir/checks/nobadfuncs/nobadfuncs/%s/foo.LexEnter(*github.com/palantir/checks/nobadfuncs/nobadfuncs/%s/foo.Lexer) github.com/palantir/checks/nobadfuncs/nobadfuncs/%s/foo.StateFn", path.Join(wd, testDir, "foo/foo.go"), testDir, testDir, testDir) + "\n"
+			},
+		},
+		{
+			name: "deals with circular type definitions in vendor directories",
+			specs: []gofiles.GoFileSpec{
+				{
+					RelPath: "foo/foo.go",
+					Src: `
+package foo
+
+import (
+	"github.com/bar"
+)
+
+func Foo() {
+	bar.LexText(nil)
+	fn := bar.LexEnter(nil)
+	fn(nil)
+}
+`,
+				},
+				{
+					RelPath: "foo/vendor/github.com/bar/bar.go",
+					Src: `
+package bar
+
+type StateFn func(*Lexer) StateFn
+
+type Lexer struct {
+	State StateFn
+}
+
+func LexText(l *Lexer) StateFn {
+	return LexEnter
+}
+
+func LexEnter(l *Lexer) StateFn {
+	return nil
+}
+`,
+				},
+			},
+			want: func(testDir string) string {
+				return strings.Join([]string{
+					fmt.Sprintf("%s:9:6: func github.com/bar.LexText(*github.com/bar.Lexer) github.com/bar.StateFn", path.Join(wd, testDir, "foo/foo.go")),
+					fmt.Sprintf("%s:10:12: func github.com/bar.LexEnter(*github.com/bar.Lexer) github.com/bar.StateFn", path.Join(wd, testDir, "foo/foo.go")),
+					fmt.Sprintf("%s:11:9: func github.com/bar.LexEnter(*github.com/bar.Lexer) github.com/bar.StateFn", path.Join(wd, testDir, "foo/vendor/github.com/bar/bar.go")),
+				}, "\n") + "\n"
+			},
+		},
 	} {
 		currCaseTmpDir, err := ioutil.TempDir(tmpDir, fmt.Sprintf("case-%d-", i))
 		require.NoError(t, err)

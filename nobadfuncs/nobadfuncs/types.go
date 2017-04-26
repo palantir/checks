@@ -24,10 +24,10 @@ import (
 // package references have their vendor references removed.
 //
 // Without this, the "String()" function for a function returns output of the form:
-// 	func (github.com/palantir/checks/vendor/github.com/Foo).Foo(paramVarName github.com/palantir/checks/vendor/github.com/foo.FooType) (namedReturnVar github.com/palantir/checks/vendor/github.com/foo.FooType)
+//  func (github.com/palantir/checks/vendor/github.com/Foo).Foo(paramVarName github.com/palantir/checks/vendor/github.com/foo.FooType) (namedReturnVar github.com/palantir/checks/vendor/github.com/foo.FooType)
 //
 // The "String()" function for the function returned by this function for the above would be:
-//	func (github.com/Foo).Foo(github.com/foo.FooType) github.com/foo.FooType
+//  func (github.com/Foo).Foo(github.com/foo.FooType) github.com/foo.FooType
 func toFuncWithNoIdentifiersRemoveVendor(in *types.Func) *types.Func {
 	sig, ok := in.Type().(*types.Signature)
 	if !ok {
@@ -103,7 +103,7 @@ func toTypeRemoveVendor(in types.Type) types.Type {
 		// this is the crux of the function: for all type names, transform the "package" parameter such that the
 		// path to the vendor directory is removed.
 		typName := types.NewTypeName(typ.Obj().Pos(), pkgNoVendor(typ.Obj().Pkg()), typ.Obj().Name(), typ.Obj().Type())
-		return types.NewNamed(typName, toTypeRemoveVendor(typ.Underlying()), methods)
+		return types.NewNamed(typName, typ.Underlying(), methods)
 	}
 }
 
