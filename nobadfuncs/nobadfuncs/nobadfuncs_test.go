@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"sort"
 	"strings"
 	"testing"
 
@@ -216,6 +217,48 @@ func TypeAlias() {
 				}, "\n") + "\n"
 			},
 		},
+		{
+			name: "package with multiple files handled properly",
+			specs: []gofiles.GoFileSpec{
+				{
+					RelPath: "foo/foo.go",
+					Src: `
+package foo
+
+import (
+	"net/http"
+)
+
+func Foo() {
+	http.DefaultClient.Do(nil)
+}
+`,
+				},
+				{
+					RelPath: "foo/foo2.go",
+					Src: `
+package foo
+
+import (
+	"net/http"
+)
+
+func Foo2() {
+	http.DefaultClient.Do(nil)
+}
+`,
+				},
+			},
+			sigs: map[string]string{
+				"func (*net/http.Client).Do(*net/http.Request) (*net/http.Response, error)": "No",
+			},
+			want: func(testDir string) string {
+				return strings.Join([]string{
+					fmt.Sprintf("%s:9:21: No", path.Join(wd, testDir, "foo/foo.go")),
+					fmt.Sprintf("%s:9:21: No", path.Join(wd, testDir, "foo/foo2.go")),
+				}, "\n") + "\n"
+			},
+		},
 	} {
 		currCaseTmpDir, err := ioutil.TempDir(tmpDir, fmt.Sprintf("case-%d-", i))
 		require.NoError(t, err)
@@ -223,15 +266,20 @@ func TypeAlias() {
 		files, err := gofiles.Write(currCaseTmpDir, currCase.specs)
 		require.NoError(t, err, "Case %d: %s", i, currCase.name)
 
-		var pkgs []string
+		pkgs := make(map[string]struct{})
 		for _, val := range files {
 			currPkg, err := pkgpath.NewAbsPkgPath(path.Dir(val.Path)).GoPathSrcRel()
 			require.NoError(t, err)
-			pkgs = append(pkgs, currPkg)
+			pkgs[currPkg] = struct{}{}
 		}
+		var sortedPkgs []string
+		for pkg := range pkgs {
+			sortedPkgs = append(sortedPkgs, pkg)
+		}
+		sort.Strings(sortedPkgs)
 
 		var got bytes.Buffer
-		_, err = nobadfuncs.PrintBadFuncRefs(pkgs, currCase.sigs, &got)
+		_, err = nobadfuncs.PrintBadFuncRefs(sortedPkgs, currCase.sigs, &got)
 		require.NoError(t, err, "Case %d: %s", i, currCase.name)
 
 		assert.Equal(t, currCase.want(currCaseTmpDir), got.String(), "Case %d: %s\nOutput:\n%s", i, currCase.name, got.String())
@@ -408,15 +456,20 @@ func LexEnter(l *Lexer) StateFn {
 		files, err := gofiles.Write(currCaseTmpDir, currCase.specs)
 		require.NoError(t, err, "Case %d: %s", i, currCase.name)
 
-		var pkgs []string
+		pkgs := make(map[string]struct{})
 		for _, val := range files {
 			currPkg, err := pkgpath.NewAbsPkgPath(path.Dir(val.Path)).GoPathSrcRel()
 			require.NoError(t, err)
-			pkgs = append(pkgs, currPkg)
+			pkgs[currPkg] = struct{}{}
 		}
+		var sortedPkgs []string
+		for pkg := range pkgs {
+			sortedPkgs = append(sortedPkgs, pkg)
+		}
+		sort.Strings(sortedPkgs)
 
 		var got bytes.Buffer
-		err = nobadfuncs.PrintAllFuncRefs(pkgs, &got)
+		err = nobadfuncs.PrintAllFuncRefs(sortedPkgs, &got)
 		require.NoError(t, err, "Case %d: %s", i, currCase.name)
 
 		assert.Equal(t, currCase.want(currCaseTmpDir), got.String(), "Case %d: %s\nOutput:\n%s", i, currCase.name, got.String())
