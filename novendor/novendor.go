@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"go/build"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -156,8 +157,7 @@ func doNovendor(projectDir string, pkgPaths []string, groupPkgsByProject, fullPa
 func getPackageInfo(projectDir string, pkgsToProcess []pkgWithSrc) (allProjectPkgs map[string]bool, allVendoredPkgs map[string]bool, err error) {
 	allProjectPkgs = make(map[string]bool)
 	for _, currPkg := range pkgsToProcess {
-		examinedImports := make(map[string]bool)
-		imps, err := getAllImports(currPkg.pkg, currPkg.src, projectDir, examinedImports, true)
+		imps, err := getAllImports(currPkg.pkg, currPkg.src, projectDir, make(map[string]bool), true, nil)
 		if err != nil {
 			return nil, nil, errors.Wrapf(err, "getAllFailed")
 		}
@@ -242,7 +242,7 @@ func getAllVendoredPkgs(projectRoot string) (map[string]bool, error) {
 		}
 
 		// directory is in a vendor directory: attempt to parse as a package
-		pkg, err := doImport(".", currPath, build.ImportComment)
+		pkg, err := doImport(".", currPath, build.ImportComment, nil)
 		// record import path if package could be parsed and import path is not "." (which can
 		// happen for some directories like testdata which cannot be imported)
 		if err == nil && pkg.ImportPath != "." {
@@ -258,8 +258,9 @@ func getAllVendoredPkgs(projectRoot string) (map[string]bool, error) {
 
 // getAllImports takes an import and returns all of the packages that it imports (excluding standard library packages).
 // Includes all transitive imports and the package of the import itself. Assumes that the import occurs in a package in
-// "srcDir". If the "test" parameter is "true", considers all imports in the test files for the package as well.
-func getAllImports(importPkgPath, srcDir, projectRoot string, examinedImports map[string]bool, includeTests bool) (map[string]bool, error) {
+// "srcDir". If the "test" parameter is "true", considers all imports in the test files for the package as well. Any
+// files that match the names provided in "ctxIgnoreFiles" in the import directory will be ignored.
+func getAllImports(importPkgPath, srcDir, projectRoot string, examinedImports map[string]bool, includeTests bool, ctxIgnoreFiles map[string]struct{}) (map[string]bool, error) {
 	importedPkgs := make(map[string]bool)
 	if !strings.Contains(importPkgPath, ".") {
 		// if package is a standard package, return empty
@@ -267,10 +268,62 @@ func getAllImports(importPkgPath, srcDir, projectRoot string, examinedImports ma
 	}
 
 	// ignore error because doImport returns partial object even on error. As long as an ImportPath is present,
-	// proceed with determining imports.
-	pkg, _ := doImport(importPkgPath, srcDir, build.ImportComment)
+	// proceed with determining imports. Perform the import using the provided ctxIgnoreFiles.
+	pkg, pkgErr := doImport(importPkgPath, srcDir, build.ImportComment, ctxIgnoreFiles)
 	if pkg.ImportPath == "" {
 		return nil, nil
+	}
+
+	if _, ok := pkgErr.(*build.MultiplePackageError); ok {
+		// Multiple packages were detected -- this is likely due to including all build constraints.
+		// Attempt to resolve this by parsing each set of files that form a single package together in isolation.
+
+		// create map of invalid Go files
+		invalidFilesMap := make(map[string]struct{})
+		for _, currInvalid := range pkg.InvalidGoFiles {
+			invalidFilesMap[currInvalid] = struct{}{}
+		}
+
+		// create map of Go files that were not considered invalid
+		validGoFiles := make(map[string]struct{})
+		for _, currFile := range append(append(pkg.GoFiles, pkg.TestGoFiles...), pkg.XTestGoFiles...) {
+			if _, ok := invalidFilesMap[currFile]; ok {
+				continue
+			}
+			validGoFiles[currFile] = struct{}{}
+		}
+
+		createIgnoreMap := func(entriesToAdd map[string]struct{}) map[string]struct{} {
+			allIgnore := make(map[string]struct{})
+			for k := range ctxIgnoreFiles {
+				allIgnore[k] = struct{}{}
+			}
+			for k := range entriesToAdd {
+				allIgnore[k] = struct{}{}
+			}
+			return allIgnore
+		}
+
+		// context that ignores all "invalid" files (in addition to any files that should already be ignored)
+		res, err := getAllImports(importPkgPath, srcDir, projectRoot, examinedImports, includeTests, createIgnoreMap(invalidFilesMap))
+		if err != nil {
+			return res, err
+		}
+		// this is a special case in which the same import path must be examined multiple times (the next call
+		// will be processing the same import path), so manually remove current import from examined imports.
+		delete(examinedImports, pkg.ImportPath)
+
+		// context that ignores all "valid" files (in addition to any files that should already be ignored)
+		res2, err := getAllImports(importPkgPath, srcDir, projectRoot, examinedImports, includeTests, createIgnoreMap(validGoFiles))
+		if err != nil {
+			return res2, err
+		}
+
+		// combine results
+		for k, v := range res2 {
+			res[k] = v
+		}
+		return res, nil
 	}
 
 	// skip import if package has already been examined
@@ -299,7 +352,7 @@ func getAllImports(importPkgPath, srcDir, projectRoot string, examinedImports ma
 			continue
 		}
 
-		currImportedPkgs, err := getAllImports(currImport, srcDir, projectRoot, examinedImports, false)
+		currImportedPkgs, err := getAllImports(currImport, srcDir, projectRoot, examinedImports, false, nil)
 		if err != nil {
 			return nil, errors.Wrapf(err, "isExternalImport failed for %v", currImport)
 		}
@@ -355,6 +408,25 @@ func getAllContext() build.Context {
 	return ctx
 }
 
-func doImport(path, srcDir string, mode build.ImportMode) (*build.Package, error) {
-	return allContext.Import(path, srcDir, mode)
+// doImport performs an "Import" operation. If "ignoreFiles" does not have any entries, it uses "allContext" to do the
+// import. Otherwise, it creates a new "all" context with a custom ReadDir function that ignores files with the names in
+// the provided map.
+func doImport(path, srcDir string, mode build.ImportMode, ignoreFiles map[string]struct{}) (*build.Package, error) {
+	if len(ignoreFiles) == 0 {
+		return allContext.Import(path, srcDir, mode)
+	}
+
+	ctx := getAllContext()
+	ctx.ReadDir = func(dir string) ([]os.FileInfo, error) {
+		files, err := ioutil.ReadDir(dir)
+		var filesToReturn []os.FileInfo
+		for _, curr := range files {
+			if _, ok := ignoreFiles[curr.Name()]; ok {
+				continue
+			}
+			filesToReturn = append(filesToReturn, curr)
+		}
+		return filesToReturn, err
+	}
+	return ctx.Import(path, srcDir, mode)
 }
