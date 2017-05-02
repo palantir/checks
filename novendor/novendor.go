@@ -121,13 +121,13 @@ func doNovendor(projectDir string, pkgPaths []string, groupPkgsByProject, fullPa
 		}
 	}
 
-	allProjetPkgs, allVendoredPkgs, err := getPackageInfo(projectDir, pkgsToProcess)
+	allProjectPkgs, allVendoredPkgs, err := getPackageInfo(projectDir, pkgsToProcess)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get package information")
 	}
 	if printPkgInfo {
-		projectPkgOutput := []string{fmt.Sprintf("All project packages (%d):", len(allProjetPkgs))}
-		for pkg := range allProjetPkgs {
+		projectPkgOutput := []string{fmt.Sprintf("All project packages (%d):", len(allProjectPkgs))}
+		for pkg := range allProjectPkgs {
 			projectPkgOutput = append(projectPkgOutput, pkg)
 		}
 		sort.Strings(projectPkgOutput)
@@ -141,7 +141,7 @@ func doNovendor(projectDir string, pkgPaths []string, groupPkgsByProject, fullPa
 		fmt.Fprintln(w, strings.Join(vendoredPkgOutput, "\n\t"))
 	}
 
-	unusedPkgs, err := getUnusedVendoredPkgs(allProjetPkgs, allVendoredPkgs, groupPkgsByProject, fullPath)
+	unusedPkgs, err := getUnusedVendoredPkgs(allProjectPkgs, allVendoredPkgs, groupPkgsByProject, fullPath)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to determine unused packages")
 	}
