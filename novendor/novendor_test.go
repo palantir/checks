@@ -94,6 +94,145 @@ func TestNovendor(t *testing.T) {
 			},
 		},
 		{
+			// package imports vendored package that contains files that declare a "foo" and "main" package,
+			// but "main" package is excluded using build constraint. The "foo" package imports another
+			// package, which is also vendored. The vendored package should not be reported as unused.
+			name: "simple multi-package case",
+			getArgs: func(projectDir string) (string, []string) {
+				return projectDir, nil
+			},
+			files: []gofiles.GoFileSpec{
+				{
+					RelPath: "main.go",
+					Src:     `package main; import _ "github.com/foo";`,
+				},
+				{
+					RelPath: "vendor/github.com/foo/foo.go",
+					Src:     `package foo; import _ "github.com/bar"`,
+				},
+				{
+					RelPath: "vendor/github.com/foo/main.go",
+					Src: `// +build ignore
+
+package main`,
+				},
+				{
+					RelPath: "vendor/github.com/bar/bar.go",
+					Src:     `package bar`,
+				},
+			},
+		},
+		{
+			// vendored import has 3 different packages in it: "library" (2 files), "main" (1 file) and
+			// "library2" (1 file), where "main" and "library" both have ignore build directives and all of
+			// these packages vendor different packages. The logic for multi-package build directive parsing
+			// should ensure that none of the packages vendored by the 3 different packages are reported as
+			// unused.
+			name: "complicated case of multi-package vendored import with build constraints",
+			getArgs: func(projectDir string) (string, []string) {
+				return projectDir, nil
+			},
+			files: []gofiles.GoFileSpec{
+				{
+					RelPath: "main.go",
+					Src:     `package main; import _ "github.com/org/library";`,
+				},
+				{
+					RelPath: "vendor/github.com/org/library/library1.go",
+					Src:     `package library; import _ "github.com/lib1import"`,
+				},
+				{
+					RelPath: "vendor/github.com/lib1import/import.go",
+					Src:     `package lib1import`,
+				},
+				{
+					RelPath: "vendor/github.com/org/library/library1_too.go",
+					Src:     `package library; import _ "github.com/anotherlib1import"`,
+				},
+				{
+					RelPath: "vendor/github.com/anotherlib1import/import.go",
+					Src:     `package anotherlib1import`,
+				},
+				{
+					RelPath: "vendor/github.com/org/library/main.go",
+					Src: `// +build ignore
+
+package main; import _ "github.com/mainimport"`,
+				},
+				{
+					RelPath: "vendor/github.com/mainimport/import.go",
+					Src:     `package mainimport`,
+				},
+				{
+					RelPath: "vendor/github.com/org/library/library2.go",
+					Src: `// +build ignore
+
+package library2; import _ "github.com/lib2import"`,
+				},
+				{
+					RelPath: "vendor/github.com/lib2import/import.go",
+					Src:     `package lib2import`,
+				},
+			},
+		},
+		{
+			// primary package has 3 different packages in it: "foo" (1 file, 1 test and 1 external test),
+			// "main" (1 file) and "other" (1 file), where "main" and "other" both have ignore build
+			// directives and all of these packages (and tests) vendor different packages. The logic for
+			// multi-package build directive parsing should ensure that none of the packages vendored by the
+			// 3 different packages and tests are reported as unused.
+			name: "complicated case of multi-package package with build constraints with tests",
+			getArgs: func(projectDir string) (string, []string) {
+				return projectDir, nil
+			},
+			files: []gofiles.GoFileSpec{
+				{
+					RelPath: "foo.go",
+					Src:     `package foo; import _ "github.com/fooimport";`,
+				},
+				{
+					RelPath: "foo_ext_test.go",
+					Src:     `package foo_test; import _ "github.com/fooexttestimport";`,
+				},
+				{
+					RelPath: "foo_test.go",
+					Src:     `package foo; import _ "github.com/footestimport";`,
+				},
+				{
+					RelPath: "main.go",
+					Src: `// +build ignore
+
+package main; import _ "github.com/mainimport";`,
+				},
+				{
+					RelPath: "other.go",
+					Src: `// +build ignore
+
+package other; import _ "github.com/otherimport";`,
+				},
+				{
+					RelPath: "vendor/github.com/fooimport/fooimport.go",
+					Src:     `package fooimport`,
+				},
+				{
+					RelPath: "vendor/github.com/fooexttestimport/fooexttestimport.go",
+					Src:     `package fooexttestimport`,
+				},
+				{
+					RelPath: "vendor/github.com/footestimport/footestimport.go",
+					Src:     `package footestimport`,
+				},
+				{
+					RelPath: "vendor/github.com/mainimport/mainimport.go",
+					Src:     `package mainimport`,
+				},
+				{
+					RelPath: "vendor/github.com/otherimport/otherimport.go",
+					Src:     `package otherimport`,
+				},
+			},
+		},
+		{
 			name: "unused vendored package causes error",
 			getArgs: func(projectDir string) (string, []string) {
 				return path.Join(projectDir), nil
