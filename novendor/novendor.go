@@ -159,7 +159,7 @@ func getPackageInfo(projectDir string, pkgsToProcess []pkgWithSrc, groupByProjec
 	for _, currPkg := range pkgsToProcess {
 		imps, err := getAllImports(currPkg.pkg, currPkg.src, projectDir, make(map[string]bool), true, groupByProject, nil)
 		if err != nil {
-			return nil, nil, errors.Wrapf(err, "getAllFailed")
+			return nil, nil, errors.Wrapf(err, "failed to get all imports for %s", currPkg.pkg)
 		}
 		for k, v := range imps {
 			allProjectPkgs[k] = v
@@ -406,7 +406,7 @@ func getAllImports(importPkgPath, srcDir, projectRoot string, examinedImports ma
 
 		currImportedPkgs, err := getAllImports(currImport, srcDir, projectRoot, examinedImports, false, groupByProject, nil)
 		if err != nil {
-			return nil, errors.Wrapf(err, "isExternalImport failed for %v", currImport)
+			return nil, errors.Wrapf(err, "failed to get all imports for %s", currImport)
 		}
 		examinedImports[currImport] = true
 
