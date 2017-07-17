@@ -370,5 +370,5 @@ func verifyDoMain(t *testing.T, caseNum int, name, dir string, args []string, gr
 	} else {
 		assert.Error(t, doMainErr, fmt.Sprintf("Case %d (%s): %s", caseNum, name, checkType))
 	}
-	assert.Equal(t, expectedOutput, buf.String(), "Case %d (%s): %s", caseNum, name, checkType)
+	assert.Equal(t, expectedOutput, buf.String(), "Case %d (%s): %s\nOutput:\n%s", caseNum, name, checkType, buf.String())
 }
