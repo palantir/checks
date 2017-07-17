@@ -274,6 +274,11 @@ func getAllImports(importPkgPath, srcDir, projectRoot string, examinedImports ma
 		return nil, nil
 	}
 
+	// skip import if package has already been examined
+	if examinedImports[pkg.ImportPath] {
+		return importedPkgs, nil
+	}
+
 	if _, ok := pkgErr.(*build.MultiplePackageError); ok {
 		// Multiple packages were detected -- this is likely due to including all build constraints.
 		// Attempt to resolve this by parsing each set of files that form a single package together in isolation.
@@ -324,11 +329,6 @@ func getAllImports(importPkgPath, srcDir, projectRoot string, examinedImports ma
 			res[k] = v
 		}
 		return res, nil
-	}
-
-	// skip import if package has already been examined
-	if examinedImports[pkg.ImportPath] {
-		return importedPkgs, nil
 	}
 
 	importedPkgs[pkg.ImportPath] = true
