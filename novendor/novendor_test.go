@@ -94,37 +94,6 @@ func TestNovendor(t *testing.T) {
 			},
 		},
 		{
-			name: "multi-level transitive vendored imports: import a vendored package that imports another vendored package",
-			getArgs: func(projectDir string) (string, []string) {
-				return projectDir, nil
-			},
-			files: []gofiles.GoFileSpec{
-				{
-					RelPath: "foo.go",
-					Src:     `package main; import _ "github.com/org1/bar/inner1";`,
-				},
-				{
-					RelPath: "vendor/github.com/org1/bar/inner1/inner1.go",
-					Src:     `package inner1`,
-				},
-				{
-					RelPath: "vendor/github.com/org1/bar/inner2/inner2.go",
-					Src:     `package inner2; import _ "github.com/org2/baz";`,
-				},
-				{
-					RelPath: "vendor/github.com/org2/baz/baz.go",
-					Src:     `package baz`,
-				},
-			},
-			// if packages are not grouped by project, then any package not directly imported should be reported as unused
-			noGroupOutputLines: func(files map[string]gofiles.GoFile) []string {
-				return []string{
-					files["vendor/github.com/org1/bar/inner2/inner2.go"].ImportPath,
-					files["vendor/github.com/org2/baz/baz.go"].ImportPath,
-				}
-			},
-		},
-		{
 			// package imports vendored package that contains files that declare a "foo" and "main" package,
 			// but "main" package is excluded using build constraint. The "foo" package imports another
 			// package, which is also vendored. The vendored package should not be reported as unused.
