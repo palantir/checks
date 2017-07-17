@@ -343,6 +343,45 @@ package bar; import _ "{{index . "vendor/github.com/org/library/subpackage_linux
 				},
 			},
 		},
+		{
+			name: "considers multiple vendor directories",
+			getArgs: func(projectDir string) (string, []string) {
+				return path.Join(projectDir), nil
+			},
+			files: []gofiles.GoFileSpec{
+				{
+					RelPath: "foo.go",
+					Src:     `package main`,
+				},
+				{
+					RelPath: "vendor/github.com/org/library/bar/bar.go",
+					Src:     `package bar`,
+				},
+				{
+					RelPath: "subdir/vendor/github.com/org/library/bar/bar.go",
+					Src:     `package bar`,
+				},
+			},
+			defaultOutputLines: func(files map[string]gofiles.GoFile) []string {
+				return []string{
+					"github.com/org/library",
+					"github.com/org/library",
+				}
+			},
+			fullOutputLines: func(files map[string]gofiles.GoFile) []string {
+				basePkg := files["foo.go"].ImportPath
+				return []string{
+					path.Join(basePkg, "subdir", "vendor", path.Dir(files["vendor/github.com/org/library/bar/bar.go"].ImportPath)),
+					path.Join(basePkg, "vendor", path.Dir(files["vendor/github.com/org/library/bar/bar.go"].ImportPath)),
+				}
+			},
+			noGroupOutputLines: func(files map[string]gofiles.GoFile) []string {
+				return []string{
+					"github.com/org/library/bar",
+					"github.com/org/library/bar",
+				}
+			},
+		},
 	} {
 		currTmpDir, err := ioutil.TempDir(tmpDir, "")
 		require.NoError(t, err, "Case %d (%s)", i, currCase.name)
