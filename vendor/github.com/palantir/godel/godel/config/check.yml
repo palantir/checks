@@ -1,0 +1,28 @@
+checks:
+  golint:
+    filters:
+      - value: "should have comment or be unexported"
+      - value: "or a comment on this block"
+  novendor:
+    filters:
+      # Dependent vendored library that is not detected due to https://github.com/palantir/checks/issues/34
+      - value: "github.com/google/go-querystring"
+      # packages used for amalgomating gonform
+      - value: "cmd/gofmt"
+      # packages used for amalgomating gunit
+      - value: "github.com/jstemmer/go-junit-report"
+      - value: "github.com/nmiyake/gotest"
+      - value: "rsc.io/gt"
+      # packages used for amalgomating okgo
+      - value: "github.com/golang/lint"
+      - value: "github.com/gordonklaus/ineffassign"
+      - value: "github.com/kisielk/errcheck"
+      - value: "github.com/mdempsky/unconvert"
+      - value: "github.com/nmiyake/govet"
+      - value: "github.com/opennota/check"
+      - value: "github.com/palantir/checks"
+      - value: "github.com/palantir/checks/compiles"
+      - value: "github.com/palantir/checks/extimport"
+      - value: "github.com/palantir/checks/novendor"
+      - value: "github.com/palantir/checks/outparamcheck"
+      - value: "github.com/remyoudompheng/go-misc"
