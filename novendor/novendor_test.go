@@ -382,6 +382,78 @@ package bar; import _ "{{index . "vendor/github.com/org/library/subpackage_linux
 				}
 			},
 		},
+		{
+			name: "ignore specified package and its dependencies",
+			getArgs: func(projectDir string) (string, []string) {
+				return path.Join(projectDir), []string{
+					"-ignore",
+					"./vendor/github.com/org/library/bar",
+				}
+			},
+			files: []gofiles.GoFileSpec{
+				{
+					RelPath: "foo.go",
+					Src:     `package main`,
+				},
+				{
+					RelPath: "vendor/github.com/org/library/bar/bar.go",
+					Src:     `package bar; import _ "github.com/org/other-lib/foo";`,
+				},
+				{
+					RelPath: "vendor/github.com/org/other-lib/foo/foo.go",
+					Src:     `package foo`,
+				},
+				{
+					RelPath: "subdir/vendor/github.com/org/library/bar/bar.go",
+					Src:     `package bar`,
+				},
+			},
+			defaultOutputLines: func(files map[string]gofiles.GoFile) []string {
+				return []string{
+					"github.com/org/library",
+				}
+			},
+			fullOutputLines: func(files map[string]gofiles.GoFile) []string {
+				basePkg := files["foo.go"].ImportPath
+				return []string{
+					path.Join(basePkg, "subdir", "vendor", path.Dir(files["vendor/github.com/org/library/bar/bar.go"].ImportPath)),
+				}
+			},
+			noGroupOutputLines: func(files map[string]gofiles.GoFile) []string {
+				return []string{
+					"github.com/org/library/bar",
+				}
+			},
+		},
+		{
+			name: "ignore multiple packages",
+			getArgs: func(projectDir string) (string, []string) {
+				return path.Join(projectDir), []string{
+					"-ignore",
+					"./vendor/github.com/org/library/bar",
+					"-ignore",
+					"./subdir/vendor/github.com/org/library/bar",
+				}
+			},
+			files: []gofiles.GoFileSpec{
+				{
+					RelPath: "foo.go",
+					Src:     `package main`,
+				},
+				{
+					RelPath: "vendor/github.com/org/library/bar/bar.go",
+					Src:     `package bar; import _ "github.com/org/other-lib/foo";`,
+				},
+				{
+					RelPath: "vendor/github.com/org/other-lib/foo/foo.go",
+					Src:     `package foo`,
+				},
+				{
+					RelPath: "subdir/vendor/github.com/org/library/bar/bar.go",
+					Src:     `package bar`,
+				},
+			},
+		},
 	} {
 		currTmpDir, err := ioutil.TempDir(tmpDir, "")
 		require.NoError(t, err, "Case %d (%s)", i, currCase.name)
