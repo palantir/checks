@@ -53,40 +53,40 @@
 			"revisionTime": "2017-04-24T17:44:42Z"
 		},
 		{
-			"checksumSHA1": "csaM9q2Qqj12DpxMSXS3V+a5qdY=",
+			"checksumSHA1": "539ACCGdKLWYPlXHSCVBcyvRlnQ=",
 			"path": "github.com/palantir/pkg/cli",
-			"revision": "c60ea2d471b77fae0cd4219bd329bd7e0e01d5b8",
-			"revisionTime": "2016-12-02T17:17:08Z"
+			"revision": "ac9dcc410953c58a09d9cdd7bc0270e2917fd943",
+			"revisionTime": "2017-07-05T14:35:08Z"
 		},
 		{
-			"checksumSHA1": "qsyt9pmFPbq8o/+8ks06HrU4rjo=",
+			"checksumSHA1": "rnJ3L3ifo/f6E6J1AAxCJ9czkHA=",
 			"path": "github.com/palantir/pkg/cli/cfgcli",
-			"revision": "c60ea2d471b77fae0cd4219bd329bd7e0e01d5b8",
-			"revisionTime": "2016-12-02T17:17:08Z"
+			"revision": "ac9dcc410953c58a09d9cdd7bc0270e2917fd943",
+			"revisionTime": "2017-07-05T14:35:08Z"
 		},
 		{
-			"checksumSHA1": "uziLDbeXqsphfpZyOiovCRx9l8Q=",
+			"checksumSHA1": "FXX9tuBZLSGdfkppgIZn/LZsnmQ=",
 			"path": "github.com/palantir/pkg/cli/completion",
-			"revision": "c60ea2d471b77fae0cd4219bd329bd7e0e01d5b8",
-			"revisionTime": "2016-12-02T17:17:08Z"
+			"revision": "ac9dcc410953c58a09d9cdd7bc0270e2917fd943",
+			"revisionTime": "2017-07-05T14:35:08Z"
 		},
 		{
-			"checksumSHA1": "S06fl4e2OO9T2WfePffUC4TG03o=",
+			"checksumSHA1": "3LRrj/IF3OX2cKtNZ5yf2cxQDgw=",
 			"path": "github.com/palantir/pkg/cli/flag",
-			"revision": "c60ea2d471b77fae0cd4219bd329bd7e0e01d5b8",
-			"revisionTime": "2016-12-02T17:17:08Z"
+			"revision": "ac9dcc410953c58a09d9cdd7bc0270e2917fd943",
+			"revisionTime": "2017-07-05T14:35:08Z"
 		},
 		{
-			"checksumSHA1": "MhrjempJy/hQiqcj1axZp/oox9Q=",
+			"checksumSHA1": "CPYwjCsLKBVtaJte9x5bP81z2mg=",
 			"path": "github.com/palantir/pkg/matcher",
-			"revision": "c60ea2d471b77fae0cd4219bd329bd7e0e01d5b8",
-			"revisionTime": "2016-12-02T17:17:08Z"
+			"revision": "ac9dcc410953c58a09d9cdd7bc0270e2917fd943",
+			"revisionTime": "2017-07-05T14:35:08Z"
 		},
 		{
-			"checksumSHA1": "wFdDjAqsTus/qC39RSSB7liU124=",
+			"checksumSHA1": "6k+HyRK5+01ofk28YqvTMYeQ27g=",
 			"path": "github.com/palantir/pkg/pkgpath",
-			"revision": "c60ea2d471b77fae0cd4219bd329bd7e0e01d5b8",
-			"revisionTime": "2016-12-02T17:17:08Z"
+			"revision": "ac9dcc410953c58a09d9cdd7bc0270e2917fd943",
+			"revisionTime": "2017-07-05T14:35:08Z"
 		},
 		{
 			"checksumSHA1": "JAeK0zQn4QpNfxpE3ElBksT+v3E=",
