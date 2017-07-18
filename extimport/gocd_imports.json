@@ -20,15 +20,15 @@
         },
         {
             "path": "github.com/palantir/checks/vendor/github.com/palantir/pkg/cli",
-            "numGoFiles": 17,
-            "numImportedGoFiles": 17,
+            "numGoFiles": 18,
+            "numImportedGoFiles": 18,
             "importedFrom": [
                 "github.com/palantir/checks/extimport"
             ]
         },
         {
             "path": "github.com/palantir/checks/vendor/github.com/palantir/pkg/cli/flag",
-            "numGoFiles": 7,
+            "numGoFiles": 8,
             "numImportedGoFiles": 3,
             "importedFrom": [
                 "github.com/palantir/checks/extimport"
