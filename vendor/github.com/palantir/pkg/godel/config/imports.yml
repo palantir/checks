@@ -1,0 +1,13 @@
+root-dirs:
+  - cli
+  - httpserver
+  - matcher
+  - objmatcher
+  - pkgpath
+  - safehttp
+  - safejson
+  - safeyaml
+  - signals
+  - specdir
+  - tlsconfig
+  - transform

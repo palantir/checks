@@ -1,0 +1,22 @@
+tags:
+  distgo:
+    paths:
+      - "apps/distgo"
+    exclude:
+      paths:
+        - "apps/distgo/cmd/docker"
+  docker-distgo:
+       paths:
+         - "apps/distgo/cmd/docker"
+  gonform:
+    paths:
+      - "apps/gonform"
+  gunit:
+    paths:
+      - "apps/gunit"
+  okgo:
+    paths:
+      - "apps/okgo"
+  integration:
+    paths:
+      - "integration_test"
