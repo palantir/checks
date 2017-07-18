@@ -22,6 +22,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -39,6 +40,7 @@ const (
 	projectPkgFlagName   = "project-package"
 	fullPathFlagName     = "full"
 	printPkgInfoFlagName = "print-pkg-info"
+	ignoreFlagName       = "ignore"
 )
 
 var (
@@ -60,6 +62,10 @@ var (
 		Name:  printPkgInfoFlagName,
 		Usage: "print all project packages and vendored packages that are found before execution",
 	}
+	ignoreFlag = flag.StringFlag{
+		Name:  ignoreFlagName,
+		Usage: "packages to ignore (specified package and all its dependencies will be excluded from novendor)",
+	}
 )
 
 func main() {
@@ -70,13 +76,18 @@ func main() {
 		fullPathFlag,
 		pkgsFlag,
 		printPkgInfoFlag,
+		ignoreFlag,
 	)
 	app.Action = func(ctx cli.Context) error {
 		wd, err := dirs.GetwdEvalSymLinks()
 		if err != nil {
 			return errors.Wrapf(err, "Failed to get working directory")
 		}
-		return doNovendor(wd, ctx.Slice(pkgsFlagName), ctx.Bool(projectPkgFlagName), ctx.Bool(fullPathFlagName), ctx.Bool(printPkgInfoFlagName), ctx.App.Stdout)
+		pkgs := ctx.Slice(pkgsFlagName)
+		if ignorePkgs := ctx.StringSlice(ignoreFlagName); !reflect.DeepEqual(ignorePkgs, []string{""}) {
+			pkgs = append(pkgs, ignorePkgs...)
+		}
+		return doNovendor(wd, pkgs, ctx.Bool(projectPkgFlagName), ctx.Bool(fullPathFlagName), ctx.Bool(printPkgInfoFlagName), ctx.App.Stdout)
 	}
 	os.Exit(app.Run(os.Args))
 }
