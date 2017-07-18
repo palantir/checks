@@ -2,15 +2,15 @@
     "imports": [
         {
             "path": "github.com/palantir/checks/vendor/github.com/palantir/pkg/pkgpath",
-            "numGoFiles": 1,
-            "numImportedGoFiles": 3,
+            "numGoFiles": 2,
+            "numImportedGoFiles": 6,
             "importedFrom": [
                 "github.com/palantir/checks/ptimports/ptimports"
             ]
         },
         {
             "path": "github.com/palantir/checks/vendor/golang.org/x/tools/go/ast/astutil",
-            "numGoFiles": 3,
+            "numGoFiles": 5,
             "numImportedGoFiles": 0,
             "importedFrom": [
                 "github.com/palantir/checks/ptimports/ptimports"

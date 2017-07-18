@@ -11,16 +11,16 @@
         },
         {
             "path": "github.com/palantir/checks/vendor/github.com/nmiyake/pkg/errorstringer",
-            "numGoFiles": 1,
-            "numImportedGoFiles": 2,
+            "numGoFiles": 2,
+            "numImportedGoFiles": 7,
             "importedFrom": [
                 "github.com/palantir/checks/gogenerate/cmd/gogenerate"
             ]
         },
         {
             "path": "github.com/palantir/checks/vendor/github.com/palantir/pkg/cli",
-            "numGoFiles": 18,
-            "numImportedGoFiles": 18,
+            "numGoFiles": 27,
+            "numImportedGoFiles": 198,
             "importedFrom": [
                 "github.com/palantir/checks/gogenerate/cmd",
                 "github.com/palantir/checks/gogenerate/cmd/gogenerate"
@@ -29,7 +29,7 @@
         {
             "path": "github.com/palantir/checks/vendor/github.com/palantir/pkg/cli/cfgcli",
             "numGoFiles": 1,
-            "numImportedGoFiles": 36,
+            "numImportedGoFiles": 225,
             "importedFrom": [
                 "github.com/palantir/checks/gogenerate/cmd",
                 "github.com/palantir/checks/gogenerate/cmd/gogenerate"
@@ -38,14 +38,14 @@
         {
             "path": "github.com/palantir/checks/vendor/github.com/palantir/pkg/cli/flag",
             "numGoFiles": 8,
-            "numImportedGoFiles": 3,
+            "numImportedGoFiles": 4,
             "importedFrom": [
                 "github.com/palantir/checks/gogenerate/cmd"
             ]
         },
         {
             "path": "github.com/palantir/checks/vendor/github.com/palantir/pkg/matcher",
-            "numGoFiles": 3,
+            "numGoFiles": 6,
             "numImportedGoFiles": 0,
             "importedFrom": [
                 "github.com/palantir/checks/gogenerate/config",
@@ -54,7 +54,7 @@
         },
         {
             "path": "github.com/palantir/checks/vendor/github.com/pkg/errors",
-            "numGoFiles": 2,
+            "numGoFiles": 7,
             "numImportedGoFiles": 0,
             "importedFrom": [
                 "github.com/palantir/checks/gogenerate/config",
@@ -63,7 +63,7 @@
         },
         {
             "path": "github.com/palantir/checks/vendor/gopkg.in/yaml.v2",
-            "numGoFiles": 13,
+            "numGoFiles": 16,
             "numImportedGoFiles": 0,
             "importedFrom": [
                 "github.com/palantir/checks/gogenerate/config"
@@ -74,7 +74,7 @@
     "testOnlyImports": [
         {
             "path": "github.com/palantir/checks/vendor/github.com/nmiyake/pkg/gofiles",
-            "numGoFiles": 1,
+            "numGoFiles": 2,
             "numImportedGoFiles": 0,
             "importedFrom": [
                 "github.com/palantir/checks/gogenerate/gogenerate_test"
@@ -82,16 +82,16 @@
         },
         {
             "path": "github.com/palantir/checks/vendor/github.com/stretchr/testify/assert",
-            "numGoFiles": 6,
-            "numImportedGoFiles": 9,
+            "numGoFiles": 9,
+            "numImportedGoFiles": 19,
             "importedFrom": [
                 "github.com/palantir/checks/gogenerate/gogenerate_test"
             ]
         },
         {
             "path": "github.com/palantir/checks/vendor/github.com/stretchr/testify/require",
-            "numGoFiles": 5,
-            "numImportedGoFiles": 15,
+            "numGoFiles": 7,
+            "numImportedGoFiles": 28,
             "importedFrom": [
                 "github.com/palantir/checks/gogenerate/gogenerate_test"
             ]

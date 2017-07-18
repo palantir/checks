@@ -2,7 +2,7 @@
     "imports": [
         {
             "path": "github.com/palantir/checks/vendor/github.com/dustin/go-humanize",
-            "numGoFiles": 11,
+            "numGoFiles": 21,
             "numImportedGoFiles": 0,
             "importedFrom": [
                 "github.com/palantir/checks/outparamcheck/outparamcheck"
@@ -10,7 +10,7 @@
         },
         {
             "path": "github.com/palantir/checks/vendor/github.com/kisielk/gotool",
-            "numGoFiles": 5,
+            "numGoFiles": 6,
             "numImportedGoFiles": 0,
             "importedFrom": [
                 "github.com/palantir/checks/outparamcheck/outparamcheck"
@@ -18,7 +18,7 @@
         },
         {
             "path": "github.com/palantir/checks/vendor/github.com/pkg/errors",
-            "numGoFiles": 2,
+            "numGoFiles": 7,
             "numImportedGoFiles": 0,
             "importedFrom": [
                 "github.com/palantir/checks/outparamcheck/outparamcheck"
@@ -26,8 +26,8 @@
         },
         {
             "path": "github.com/palantir/checks/vendor/golang.org/x/tools/go/loader",
-            "numGoFiles": 6,
-            "numImportedGoFiles": 8,
+            "numGoFiles": 8,
+            "numImportedGoFiles": 15,
             "importedFrom": [
                 "github.com/palantir/checks/outparamcheck/outparamcheck",
                 "github.com/palantir/checks/outparamcheck/outparamcheck_test"
@@ -38,8 +38,8 @@
     "testOnlyImports": [
         {
             "path": "github.com/palantir/checks/vendor/github.com/stretchr/testify/assert",
-            "numGoFiles": 6,
-            "numImportedGoFiles": 9,
+            "numGoFiles": 9,
+            "numImportedGoFiles": 19,
             "importedFrom": [
                 "github.com/palantir/checks/outparamcheck/exprs_test",
                 "github.com/palantir/checks/outparamcheck/outparamcheck_test"
@@ -47,8 +47,8 @@
         },
         {
             "path": "github.com/palantir/checks/vendor/github.com/stretchr/testify/require",
-            "numGoFiles": 5,
-            "numImportedGoFiles": 15,
+            "numGoFiles": 7,
+            "numImportedGoFiles": 28,
             "importedFrom": [
                 "github.com/palantir/checks/outparamcheck/outparamcheck_test"
             ]
