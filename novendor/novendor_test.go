@@ -233,6 +233,45 @@ package other; import _ "github.com/otherimport";`,
 			},
 		},
 		{
+			// vendored import has 2 different packages in it: "library" (2 files) and "main". One of the "library"
+			// files uses CGo, and the "main" file is excluded using a build constraint. The logic for multi-package
+			// build directive parsing should ensure that the package vendored by "library" is not reported as unused.
+			// This tests a logical edge case: when parsing "github.com/org/library", the first pass will report
+			// "library1.go" as valid and "library1_too.go" and "main.go" as invalid. In the next pass,
+			// "library1_too.go" and "main.go" will both be processed, but both will be reported as invalid. If the
+			// logic does not break at this point, it can result in an infinite loop.
+			name: "multi-package vendored import with build constraints including CGo",
+			getArgs: func(projectDir string) (string, []string) {
+				return projectDir, nil
+			},
+			files: []gofiles.GoFileSpec{
+				{
+					RelPath: "main.go",
+					Src:     `package main; import _ "github.com/org/library";`,
+				},
+				{
+					RelPath: "vendor/github.com/org/library/library1.go",
+					Src:     `package library; import _ "github.com/lib1import"`,
+				},
+				{
+					RelPath: "vendor/github.com/lib1import/import.go",
+					Src:     `package lib1import`,
+				},
+				{
+					RelPath: "vendor/github.com/org/library/library1_too.go",
+					Src: `// +build cgo
+
+package library; import "C";`,
+				},
+				{
+					RelPath: "vendor/github.com/org/library/main.go",
+					Src: `// +build ignore
+
+package main`,
+				},
+			},
+		},
+		{
 			name: "unused vendored package causes error",
 			getArgs: func(projectDir string) (string, []string) {
 				return path.Join(projectDir), nil
