@@ -84,6 +84,63 @@ generators:
 	assert.Equal(t, "foo-output", string(outputTxt))
 }
 
+func TestGenerateEnvVars(t *testing.T) {
+	testDir, cleanup, err := dirs.TempDir(".", "")
+	defer cleanup()
+	require.NoError(t, err)
+
+	specs := []gofiles.GoFileSpec{
+		{
+			RelPath: "gen/testbar.go",
+			Src: `package testbar
+
+//go:generate go run generator_main.go
+`,
+		},
+		{
+			RelPath: "gen/generator_main.go",
+			Src: `// +build ignore
+
+package main
+
+import (
+	"io/ioutil"
+	"os"
+)
+
+func main() {
+	if err := ioutil.WriteFile("output.txt", []byte(os.Getenv("GOGEN_VAR")), 0644); err != nil {
+		panic(err)
+	}
+}
+`,
+		},
+	}
+	_, err = gofiles.Write(testDir, specs)
+	require.NoError(t, err)
+
+	const configYML = `
+generators:
+  foo:
+    go-generate-dir: gen
+    gen-paths:
+      paths:
+        - "gen/output.txt"
+    environment:
+      GOGEN_VAR: test-val
+`
+	cfg, err := config.LoadFromStrings(configYML, "")
+	require.NoError(t, err)
+
+	err = gogenerate.Run(testDir, cfg, false, os.Stdout)
+	require.NoError(t, err)
+
+	outputTxt, err := ioutil.ReadFile(path.Join(testDir, "gen", "output.txt"))
+	require.NoError(t, err)
+
+	assert.Equal(t, "test-val", string(outputTxt))
+}
+
 func TestGenerateVerifyErrors(t *testing.T) {
 	testDir, cleanup, err := dirs.TempDir(".", "")
 	defer cleanup()
