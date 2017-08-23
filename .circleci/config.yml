@@ -1,14 +1,12 @@
 version: 2
-executorType: docker
-containerInfo:
-  - image: nmiyake/go:go-1.7.5-1.8.1-t35
-    cmd: ["/bin/bash"]
-stages:
+jobs:
   build:
-    parallel: 2
-    workDir: /go/src/github.com/palantir/checks
+    parallelism: 2
+    working_directory: /go/src/github.com/palantir/checks
+    docker:
+      - image: nmiyake/go:go-1.7.6-1.8.3-t39
+        cmd: ["/bin/bash"]
     environment:
-      - PROJECT: checks
       - GET_GO_VERSION: |
             case $CIRCLE_NODE_INDEX in
             0)
@@ -23,8 +21,6 @@ stages:
             esac
     steps:
       - type: checkout
-      - type: cache-restore
-        key: test-{{ .Environment.CIRCLE_SHA1 }}-{{ epoch }}
       - type: cache-restore
         key: godel-{{ checksum "godelw" }}
       - type: shell
@@ -48,16 +44,10 @@ stages:
         command: go install $(./godelw packages)
       - type: shell
         name: "Create test output directory"
-        command: mkdir -p "/tmp/test-results/$PROJECT-$(eval "$GET_GO_VERSION")"
+        command: mkdir -p "/tmp/test-results/${CIRCLE_PROJECT_REPONAME}-$(eval "$GET_GO_VERSION")"
       - type: shell
         name: "Run godel verification"
-        command: ./godelw verify --apply=false --junit-output="/tmp/test-results/$PROJECT-$(eval "$GET_GO_VERSION")/$PROJECT-$(eval "$GET_GO_VERSION")-tests.xml"
-      - type: shell
-        name: "Create integration test output directory"
-        command: mkdir -p "/tmp/test-results/$PROJECT-integration-$(eval "$GET_GO_VERSION")"
-      - type: shell
-        name: "Run godel integration tests"
-        command: ./godelw test --tags=integration --junit-output="/tmp/test-results/$PROJECT-integration-$(eval "$GET_GO_VERSION")/$PROJECT-$(eval "$GET_GO_VERSION")-tests.xml"
+        command: ./godelw verify --apply=false --junit-output="/tmp/test-results/${CIRCLE_PROJECT_REPONAME}-$(eval "$GET_GO_VERSION")/${CIRCLE_PROJECT_REPONAME}-$(eval "$GET_GO_VERSION")-tests.xml"
       - type: test-results-store
         path: /tmp/test-results
       - type: artifacts-store
