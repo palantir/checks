@@ -203,8 +203,8 @@ func main() {
 				require.NoError(t, err, "Case %d: %s", caseNum, caseName)
 			},
 			wantError: `Generators produced output that differed from what already exists: [foo]
-	foo:
-		gen/generated/output-2.txt: did not exist before, now exists`,
+  foo:
+    gen/generated/output-2.txt: did not exist before, now exists`,
 		},
 		{
 			name: "generated output removes existing file",
@@ -258,8 +258,8 @@ func main() {
 				require.NoError(t, err, "Case %d: %s", caseNum, caseName)
 			},
 			wantError: `Generators produced output that differed from what already exists: [foo]
-	foo:
-		gen/generated/output-2.txt: existed before, no longer exists`,
+  foo:
+    gen/generated/output-2.txt: existed before, no longer exists`,
 		},
 		{
 			name: "generated output changes file to directory",
@@ -310,8 +310,8 @@ func main() {
 				require.NoError(t, err, "Case %d: %s", caseNum, caseName)
 			},
 			wantError: `Generators produced output that differed from what already exists: [foo]
-	foo:
-		gen/generated/output: was previously a file, is now a directory`,
+  foo:
+    gen/generated/output: was previously a file, is now a directory`,
 		},
 		{
 			name: "generated output changes directory to file",
@@ -361,8 +361,8 @@ func main() {
 				require.NoError(t, err, "Case %d: %s", caseNum, caseName)
 			},
 			wantError: `Generators produced output that differed from what already exists: [foo]
-	foo:
-		gen/generated/output: was previously a directory, is now a file`,
+  foo:
+    gen/generated/output: was previously a directory, is now a file`,
 		},
 		{
 			name: "generated output differs",
@@ -405,8 +405,8 @@ func main() {
 				require.NoError(t, err, "Case %d: %s", caseNum, caseName)
 			},
 			wantError: `Generators produced output that differed from what already exists: [foo]
-	foo:
-		gen/output.txt: previously had checksum 0fd6feace2703f1be2b4d05ef9931b70627e46a0dcd5c32acc460e392eb0c537, now has checksum 380a300b764683667309818ff127a401c6ea6ab1959f386fe0f05505d660ba37`,
+  foo:
+    gen/output.txt: previously had checksum 0fd6feace2703f1be2b4d05ef9931b70627e46a0dcd5c32acc460e392eb0c537, now has checksum 380a300b764683667309818ff127a401c6ea6ab1959f386fe0f05505d660ba37`,
 		},
 	} {
 		currCaseDir, err := ioutil.TempDir(testDir, "")
