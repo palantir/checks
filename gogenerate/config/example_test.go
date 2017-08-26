@@ -32,12 +32,11 @@ generators:
         - "testbar/output.txt"
     environment:
       GOOS: darwin
-      GOARCH: amd64
 `
 	cfg, err := config.LoadFromStrings(yml, "")
 	if err != nil {
 		panic(err)
 	}
 	fmt.Printf("%q", fmt.Sprintf("%+v", cfg))
-	// Output: "{Generators:map[foo:{GoGenDir:testbar GenPaths:{Names:[bar] Paths:[testbar/output.txt]} Environment:map[GOOS:darwin GOARCH:amd64]}]}"
+	// Output: "{Generators:map[foo:{GoGenDir:testbar GenPaths:{Names:[bar] Paths:[testbar/output.txt]} Environment:map[GOOS:darwin]}]}"
 }
