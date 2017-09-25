@@ -18,5 +18,14 @@
         }
     ],
     "mainOnlyImports": [],
-    "testOnlyImports": []
+    "testOnlyImports": [
+        {
+            "path": "github.com/palantir/checks/vendor/github.com/stretchr/testify/assert",
+            "numGoFiles": 9,
+            "numImportedGoFiles": 19,
+            "importedFrom": [
+                "github.com/palantir/checks/ptimports/ptimports_test"
+            ]
+        }
+    ]
 }
