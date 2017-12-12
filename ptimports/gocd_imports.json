@@ -15,6 +15,14 @@
             "importedFrom": [
                 "github.com/palantir/checks/ptimports/ptimports"
             ]
+        },
+        {
+            "path": "github.com/palantir/checks/vendor/golang.org/x/tools/imports",
+            "numGoFiles": 13,
+            "numImportedGoFiles": 5,
+            "importedFrom": [
+                "github.com/palantir/checks/ptimports/ptimports"
+            ]
         }
     ],
     "mainOnlyImports": [],

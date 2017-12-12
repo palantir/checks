@@ -25,7 +25,6 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
-	"go/format"
 	"go/parser"
 	"go/printer"
 	"go/token"
@@ -38,17 +37,20 @@ import (
 
 	"github.com/palantir/pkg/pkgpath"
 	"golang.org/x/tools/go/ast/astutil"
+	"golang.org/x/tools/imports"
 )
 
 // Process formats and adjusts imports for the provided file.
 func Process(filename string, src []byte) ([]byte, error) {
-	fileSet := token.NewFileSet()
-	file, adjust, err := parse(fileSet, filename, src)
+	processedSrc, err := imports.Process(filename, src, nil)
 	if err != nil {
 		return nil, err
 	}
+	src = processedSrc
 
-	if err := removeUnusedImports(fileSet, file, filename); err != nil {
+	fileSet := token.NewFileSet()
+	file, adjust, err := parse(fileSet, filename, src)
+	if err != nil {
 		return nil, err
 	}
 
@@ -101,11 +103,6 @@ func Process(filename string, src []byte) ([]byte, error) {
 		out = adjust(src, out)
 	}
 	out = addImportSpaces(bytes.NewReader(out), spacesBefore)
-
-	out, err = format.Source(out)
-	if err != nil {
-		return nil, err
-	}
 	return out, nil
 }
 
