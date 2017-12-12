@@ -76,7 +76,7 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/tools"
-  packages = ["go/ast/astutil","go/buildutil","go/loader"]
+  packages = ["go/ast/astutil","go/buildutil","go/loader","imports"]
   revision = "3da34b1b520a543128e8441cd2ffffc383111d03"
 
 [[projects]]
@@ -88,6 +88,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "44d4abcb548d670f970f6f6387d42230f68580a0c5d5da730c530f1bd54c9853"
+  inputs-digest = "429f50bf24aecbc28b597cf6ba630cdf3f3a95746ac593170453547d5d5ea858"
   solver-name = "gps-cdcl"
   solver-version = 1
