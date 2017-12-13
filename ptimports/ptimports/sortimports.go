@@ -21,23 +21,54 @@
 package ptimports
 
 import (
+	"bytes"
 	"go/ast"
+	"go/parser"
+	"go/printer"
 	"go/token"
 	"sort"
 	"strconv"
 )
 
-func fixImports(fset *token.FileSet, f *ast.File, grp importGrouper) {
-	imports := takeImports(f)
+func fixImports(fset *token.FileSet, f *ast.File, grp importGrouper) (cImportDocs []*ast.CommentGroup, rErr error) {
+	imports, cImports, cImportsDocs := takeImports(f)
 	if imports == nil || len(imports.Specs) == 0 {
 		return
 	}
+
 	imports.Specs = sortSpecs(fset, f, grp, imports.Specs)
 	fixParens(imports)
-	f.Decls = append([]ast.Decl{imports}, f.Decls...)
+	f.Decls = append(cImports, append([]ast.Decl{imports}, f.Decls...)...)
+
+	var comments []*ast.CommentGroup
+	for _, fileComment := range f.Comments {
+		skip := false
+		for _, cImportComment := range cImportsDocs {
+			if fileComment == cImportComment {
+				skip = true
+				break
+			}
+		}
+		if skip {
+			continue
+		}
+		comments = append(comments, fileComment)
+	}
+	f.Comments = comments
+
+	buf := &bytes.Buffer{}
+	if err := printer.Fprint(buf, fset, f); err != nil {
+		return nil, err
+	}
+	newF, err := parser.ParseFile(fset, f.Name.Name, buf, parser.ParseComments)
+	if err != nil {
+		return nil, err
+	}
+	*f = *newF
+	return cImportsDocs, nil
 }
 
-func takeImports(f *ast.File) (imports *ast.GenDecl) {
+func takeImports(f *ast.File) (imports *ast.GenDecl, cImports []ast.Decl, cImportDocs []*ast.CommentGroup) {
 	for len(f.Decls) > 0 {
 		d, ok := f.Decls[0].(*ast.GenDecl)
 		if !ok || d.Tok != token.IMPORT {
@@ -46,7 +77,21 @@ func takeImports(f *ast.File) (imports *ast.GenDecl) {
 			break
 		}
 
-		if imports == nil {
+		cImport := false
+		if len(d.Specs) > 0 {
+			for _, spec := range d.Specs {
+				impSpec := spec.(*ast.ImportSpec)
+				if impSpec.Path.Value == `"C"` {
+					cImport = true
+					cImportDocs = append(cImportDocs, d.Doc)
+					d.Doc = nil
+				}
+			}
+		}
+
+		if cImport {
+			cImports = append(cImports, d)
+		} else if imports == nil {
 			imports = d
 		} else {
 			if imports.Doc == nil {
@@ -60,7 +105,7 @@ func takeImports(f *ast.File) (imports *ast.GenDecl) {
 		// Put back later in a single decl
 		f.Decls = f.Decls[1:]
 	}
-	return imports
+	return imports, cImports, cImportDocs
 }
 
 // All import decls require parens, even with only a single import.

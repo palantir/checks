@@ -60,6 +60,128 @@ func Foo() {
 }
 `,
 		},
+		{
+			"CGo import with multi-line comment",
+			`package foo
+
+// import "C"
+
+import "unsafe"
+import "io"
+
+/*
+#include <stdio.h>
+#include <stdlib.h>
+
+void myprint(char* s) {
+	printf("%s\n", s);
+}
+*/
+import "C"
+import "archive/tar"
+
+
+func Example() {
+	/*
+	multi-line comment
+	 */
+	cs := C.CString("Hello from stdio\n")
+	C.myprint(cs)
+	C.free(unsafe.Pointer(cs))
+
+	// inline comment
+	_ = io.Copy
+	_ = tar.ErrFieldTooLong
+
+}
+`,
+			`package foo
+
+// import "C"
+
+/*
+#include <stdio.h>
+#include <stdlib.h>
+
+void myprint(char* s) {
+	printf("%s\n", s);
+}
+*/
+import "C"
+
+import (
+	"archive/tar"
+	"io"
+	"unsafe"
+)
+
+func Example() {
+	/*
+		multi-line comment
+	*/
+	cs := C.CString("Hello from stdio\n")
+	C.myprint(cs)
+	C.free(unsafe.Pointer(cs))
+
+	// inline comment
+	_ = io.Copy
+	_ = tar.ErrFieldTooLong
+
+}
+`,
+		},
+		{
+			"CGo import with single-line and multi-line comments",
+			`package foo
+
+// #include <stdio.h>
+// #include <stdlib.h>
+import "C"
+import "unsafe"
+
+/*
+#include <stdio.h>
+#include <stdlib.h>
+
+void myprint(char* s) {
+	printf("%s\n", s);
+}
+*/
+import "C"
+
+func Print(s string) {
+	cs := C.CString(s)
+	C.fputs(cs, (*C.FILE)(C.stdout))
+	C.free(unsafe.Pointer(cs))
+}
+`,
+			`package foo
+
+// #include <stdio.h>
+// #include <stdlib.h>
+import "C"
+
+/*
+#include <stdio.h>
+#include <stdlib.h>
+
+void myprint(char* s) {
+	printf("%s\n", s);
+}
+*/
+import "C"
+
+import (
+	"unsafe"
+)
+
+func Print(s string) {
+	cs := C.CString(s)
+	C.fputs(cs, (*C.FILE)(C.stdout))
+	C.free(unsafe.Pointer(cs))
+}
+`,
+		},
 	} {
 		got, err := ptimports.Process("test.go", []byte(tc.in))
 		require.NoError(t, err, "Case %d: %s", i, tc.name)
