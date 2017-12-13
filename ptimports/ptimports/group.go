@@ -15,8 +15,29 @@
 package ptimports
 
 import (
+	"fmt"
+	"path/filepath"
 	"strings"
+
+	"github.com/palantir/pkg/pkgpath"
 )
+
+func repoForFile(filename string) (string, error) {
+	abs, err := filepath.Abs(filename)
+	if err != nil {
+		return "", err
+	}
+	relative := abs
+	if goPathSrcRel, err := pkgpath.NewAbsPkgPath(abs).GoPathSrcRel(); err == nil {
+		relative = goPathSrcRel
+	}
+	segments := strings.Split(relative, "/")
+	if len(segments) < 3 {
+		return "", fmt.Errorf("expected repo to be located under at least 3 subdirectories but received relative filepath: %v", relative)
+	}
+	// append trailing / to prevent matches on repos with superstring names
+	return filepath.Join(segments[:3]...) + "/", nil
+}
 
 type importGrouper interface {
 	importGroup(importPath string) int

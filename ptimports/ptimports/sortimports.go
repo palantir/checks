@@ -28,15 +28,16 @@ import (
 )
 
 func fixImports(fset *token.FileSet, f *ast.File, grp importGrouper) {
-	imports := takeImports(fset, f)
-	if imports != nil && len(imports.Specs) > 0 {
-		imports.Specs = sortSpecs(fset, f, grp, imports.Specs)
-		fixParens(imports)
-		f.Decls = append([]ast.Decl{imports}, f.Decls...)
+	imports := takeImports(f)
+	if imports == nil || len(imports.Specs) == 0 {
+		return
 	}
+	imports.Specs = sortSpecs(fset, f, grp, imports.Specs)
+	fixParens(imports)
+	f.Decls = append([]ast.Decl{imports}, f.Decls...)
 }
 
-func takeImports(fset *token.FileSet, f *ast.File) (imports *ast.GenDecl) {
+func takeImports(f *ast.File) (imports *ast.GenDecl) {
 	for len(f.Decls) > 0 {
 		d, ok := f.Decls[0].(*ast.GenDecl)
 		if !ok || d.Tok != token.IMPORT {
