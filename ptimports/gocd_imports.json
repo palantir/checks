@@ -34,6 +34,14 @@
             "importedFrom": [
                 "github.com/palantir/checks/ptimports/ptimports_test"
             ]
+        },
+        {
+            "path": "github.com/palantir/checks/vendor/github.com/stretchr/testify/require",
+            "numGoFiles": 7,
+            "numImportedGoFiles": 28,
+            "importedFrom": [
+                "github.com/palantir/checks/ptimports/ptimports_test"
+            ]
         }
     ]
 }
