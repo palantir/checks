@@ -23,18 +23,13 @@ package ptimports
 import (
 	"go/ast"
 	"go/token"
-	"path/filepath"
 	"sort"
 	"strconv"
-	"strings"
 )
 
-func fixImports(fset *token.FileSet, f *ast.File, grp importGrouper, godepsPath string) {
+func fixImports(fset *token.FileSet, f *ast.File, grp importGrouper) {
 	imports := takeImports(fset, f)
 	if imports != nil && len(imports.Specs) > 0 {
-		if godepsPath != "" {
-			insertGodeps(imports, godepsPath)
-		}
 		imports.Specs = sortSpecs(fset, f, grp, imports.Specs)
 		fixParens(imports)
 		f.Decls = append([]ast.Decl{imports}, f.Decls...)
@@ -65,24 +60,6 @@ func takeImports(fset *token.FileSet, f *ast.File) (imports *ast.GenDecl) {
 		f.Decls = f.Decls[1:]
 	}
 	return imports
-}
-
-func insertGodeps(d *ast.GenDecl, godepsPath string) {
-	thisProject := godepsPath[:strings.Index(godepsPath, "Godeps")]
-	for _, s := range d.Specs {
-		path := importPath(s)
-		if !strings.Contains(path, ".") {
-			continue
-		}
-		if strings.Contains(path, "Godeps") {
-			continue
-		}
-		if strings.HasPrefix(path, thisProject) {
-			continue
-		}
-		path = filepath.Join(godepsPath, path)
-		s.(*ast.ImportSpec).Path.Value = strconv.Quote(path)
-	}
 }
 
 // All import decls require parens, even with only a single import.

@@ -29,7 +29,6 @@ import (
 	"go/printer"
 	"go/token"
 	"io"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -70,7 +69,7 @@ func Process(filename string, src []byte) ([]byte, error) {
 	repoPath := filepath.Join(segments[:3]...) + "/"
 	grp := newVendoredGrouper(repoPath)
 
-	fixImports(fileSet, file, grp, godepsPath(filename))
+	fixImports(fileSet, file, grp)
 	imps := astutil.Imports(fileSet, file)
 
 	var spacesBefore []string // import paths we need spaces before
@@ -104,44 +103,6 @@ func Process(filename string, src []byte) ([]byte, error) {
 	}
 	out = addImportSpaces(bytes.NewReader(out), spacesBefore)
 	return out, nil
-}
-
-func godepsPath(filename string) string {
-	// Start with absolute path of file being formatted
-	abs, err := filepath.Abs(filename)
-	if err != nil {
-		return ""
-	}
-	dir := filepath.Dir(abs)
-
-	// Go up directories looking for Godeps
-	for {
-		fi, err := os.Stat(filepath.Join(dir, "Godeps"))
-		if err == nil && fi.IsDir() {
-			break // found
-		}
-		if err != nil && !os.IsNotExist(err) {
-			return ""
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			return ""
-		}
-		dir = parent
-	}
-
-	// Have absolute path, just need import path
-	// Assume last path element containing dot is the first part of import path
-	godeps := filepath.Join(dir, "Godeps", "_workspace", "src")
-	lastDot := strings.LastIndex(godeps, ".")
-	if lastDot == -1 {
-		return ""
-	}
-	lastSlashBeforeDot := strings.LastIndex(godeps[:lastDot], "/")
-	if lastSlashBeforeDot == -1 {
-		return ""
-	}
-	return godeps[lastSlashBeforeDot+1:]
 }
 
 // parse parses src, which was read from filename,
