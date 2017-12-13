@@ -29,23 +29,23 @@ import (
 	"go/printer"
 	"go/token"
 	"io"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/palantir/pkg/pkgpath"
 	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/imports"
 )
 
 // Process formats and adjusts imports for the provided file.
 func Process(filename string, src []byte) ([]byte, error) {
-	processedSrc, err := imports.Process(filename, src, nil)
+	var err error
+
+	// make src goimports-compliant
+	src, err = imports.Process(filename, src, nil)
 	if err != nil {
 		return nil, err
 	}
-	src = processedSrc
 
 	fileSet := token.NewFileSet()
 	file, adjust, err := parse(fileSet, filename, src)
@@ -53,21 +53,11 @@ func Process(filename string, src []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	abs, err := filepath.Abs(filename)
+	repo, err := repoForFile(filename)
 	if err != nil {
 		return nil, err
 	}
-	relative := abs
-	if goPathSrcRel, err := pkgpath.NewAbsPkgPath(abs).GoPathSrcRel(); err == nil {
-		relative = goPathSrcRel
-	}
-	segments := strings.Split(relative, "/")
-	if len(segments) < 3 {
-		return nil, fmt.Errorf("expected repo to be located under at least 3 subdirectories but received relative filepath: %v", relative)
-	}
-	// append trailing / to prevent matches on repos with superstring names
-	repoPath := filepath.Join(segments[:3]...) + "/"
-	grp := newVendoredGrouper(repoPath)
+	grp := newVendoredGrouper(repo)
 
 	fixImports(fileSet, file, grp)
 	imps := astutil.Imports(fileSet, file)
@@ -102,6 +92,12 @@ func Process(filename string, src []byte) ([]byte, error) {
 		out = adjust(src, out)
 	}
 	out = addImportSpaces(bytes.NewReader(out), spacesBefore)
+
+	// ensure that output is goimports-compliant
+	out, err = imports.Process(filename, out, nil)
+	if err != nil {
+		return nil, err
+	}
 	return out, nil
 }
 
