@@ -39,14 +39,6 @@ import (
 
 // Process formats and adjusts imports for the provided file.
 func Process(filename string, src []byte) ([]byte, error) {
-	var err error
-
-	// make src goimports-compliant
-	src, err = imports.Process(filename, src, nil)
-	if err != nil {
-		return nil, err
-	}
-
 	fileSet := token.NewFileSet()
 	file, adjust, err := parse(fileSet, filename, src)
 	if err != nil {
@@ -59,7 +51,10 @@ func Process(filename string, src []byte) ([]byte, error) {
 	}
 	grp := newVendoredGrouper(repo)
 
-	fixImports(fileSet, file, grp)
+	cImportsDocs, err := fixImports(fileSet, file, grp)
+	if err != nil {
+		return nil, err
+	}
 	imps := astutil.Imports(fileSet, file)
 
 	var spacesBefore []string // import paths we need spaces before
@@ -92,6 +87,20 @@ func Process(filename string, src []byte) ([]byte, error) {
 		out = adjust(src, out)
 	}
 	out = addImportSpaces(bytes.NewReader(out), spacesBefore)
+
+	cImportCommentIdx := 0
+	out = regexp.MustCompile(`\nimport "C"`).ReplaceAllFunc(out, func(match []byte) []byte {
+		if cImportCommentIdx >= len(cImportsDocs) {
+			return []byte(string(match) + "\n")
+		}
+		var commentLines []string
+		for _, comment := range cImportsDocs[cImportCommentIdx].List {
+			commentLines = append(commentLines, comment.Text)
+		}
+		val := []byte("\n" + strings.Join(commentLines, "\n") + string(match) + "\n")
+		cImportCommentIdx++
+		return val
+	})
 
 	// ensure that output is goimports-compliant
 	out, err = imports.Process(filename, out, nil)
