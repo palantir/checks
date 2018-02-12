@@ -36,7 +36,7 @@ func main() {
 	app := cli.NewApp(cli.DebugHandler(errorstringer.SingleStack))
 	app.Flags = append(app.Flags, flag.StringSlice{
 		Name:  pkgsFlagName,
-		Usage: "paths to the pacakges to check",
+		Usage: "paths to the packages to check",
 	})
 	app.Action = func(ctx cli.Context) error {
 		wd, err := dirs.GetwdEvalSymLinks()
