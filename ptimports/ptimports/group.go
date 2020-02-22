@@ -16,6 +16,7 @@ package ptimports
 
 import (
 	"fmt"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -31,12 +32,12 @@ func repoForFile(filename string) (string, error) {
 	if goPathSrcRel, err := pkgpath.NewAbsPkgPath(abs).GoPathSrcRel(); err == nil {
 		relative = goPathSrcRel
 	}
-	segments := strings.Split(relative, "/")
+	segments := strings.Split(relative, string(filepath.Separator))
 	if len(segments) < 3 {
 		return "", fmt.Errorf("expected repo to be located under at least 3 subdirectories but received relative filepath: %v", relative)
 	}
 	// append trailing / to prevent matches on repos with superstring names
-	return filepath.Join(segments[:3]...) + "/", nil
+	return path.Join(segments[:3]...) + "/", nil
 }
 
 type importGrouper interface {

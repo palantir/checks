@@ -136,6 +136,7 @@ func gofmtMain() {
 	}
 
 	for _, path := range paths {
+		path = filepath.FromSlash(path)
 		switch dir, err := os.Stat(path); {
 		case err != nil:
 			report(err)
